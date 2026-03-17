@@ -1,0 +1,70 @@
+{
+  "name": "angularpad",
+  "displayName": "AngularPad",
+  "description": "Your Angular command launchpad — run ng, lint, and build commands with a single click.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DEIN-USERNAME/angularpad"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "angularpad.openPanel",
+        "title": "AngularPad: Open Panel",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "angularpad.runCommand",
+        "title": "AngularPad: Run Command"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "angularpad",
+          "title": "AngularPad",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "angularpad": [
+        {
+          "type": "webview",
+          "id": "angularpad.panel",
+          "name": "Commands"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AngularPad",
+      "properties": {
+        "angularpad.commands": {
+          "type": "array",
+          "default": [],
+          "description": "Custom commands list"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}
