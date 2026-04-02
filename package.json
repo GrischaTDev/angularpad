@@ -4,7 +4,7 @@
   "displayName": "AngularPad",
   "icon": "resources/logo.png",
   "description": "Your Angular command launchpad — run ng, lint, and build commands with a single click.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -44,7 +44,8 @@
         {
           "type": "webview",
           "id": "angularpad.panel",
-          "name": "Commands"
+          "name": "Commands",
+          "icon": "resources/icon.svg"
         }
       ]
     },
