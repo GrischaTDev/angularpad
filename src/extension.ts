@@ -9,6 +9,8 @@ interface Command {
   group: string;
   color: string;
   icon: string;
+  cwd?: string;
+  scope?: "global" | "local";
 }
 
 const DEFAULT_COMMANDS: Command[] = [
@@ -129,6 +131,72 @@ const DEFAULT_COMMANDS: Command[] = [
   },
 ];
 
+async function getLocalCommands(): Promise<Command[]> {
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  if (!workspaceFolders || workspaceFolders.length === 0) {
+    return [];
+  }
+
+  const rootPath = workspaceFolders[0].uri.fsPath;
+  const configPath = path.join(rootPath, ".vscode", "angularpad.json");
+
+  try {
+    if (fs.existsSync(configPath)) {
+      const content = fs.readFileSync(configPath, "utf8");
+      const config = JSON.parse(content);
+      return config.customCommands || [];
+    }
+  } catch (e) {
+    console.error("Error reading local commands:", e);
+  }
+
+  return [];
+}
+
+async function saveLocalCommands(commands: Command[]): Promise<void> {
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  if (!workspaceFolders || workspaceFolders.length === 0) {
+    return;
+  }
+
+  const rootPath = workspaceFolders[0].uri.fsPath;
+  const vscodeDir = path.join(rootPath, ".vscode");
+  const configPath = path.join(vscodeDir, "angularpad.json");
+  const gitignorePath = path.join(rootPath, ".gitignore");
+
+  try {
+    if (!fs.existsSync(vscodeDir)) {
+      fs.mkdirSync(vscodeDir, { recursive: true });
+    }
+
+    const localCommands = commands.filter((cmd) => cmd.scope === "local");
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ customCommands: localCommands }, null, 2),
+      "utf8",
+    );
+
+    // Automatically add to .gitignore if it exists and doesn't already contain the entry
+    if (fs.existsSync(gitignorePath)) {
+      const gitignoreContent = fs.readFileSync(gitignorePath, "utf8");
+      const angularpadEntry = ".vscode/angularpad.json";
+
+      if (!gitignoreContent.includes(angularpadEntry)) {
+        // Add entry with a comment
+        const updatedContent =
+          gitignoreContent.trim() +
+          "\n\n# Local AngularPad commands (project-specific)\n" +
+          angularpadEntry +
+          "\n";
+        fs.writeFileSync(gitignorePath, updatedContent, "utf8");
+        console.log("AngularPad: Added .vscode/angularpad.json to .gitignore");
+      }
+    }
+  } catch (e) {
+    console.error("Error saving local commands:", e);
+  }
+}
+
 async function getProjectRoot(): Promise<string | undefined> {
   const workspaceFolders = vscode.workspace.workspaceFolders;
   if (!workspaceFolders || workspaceFolders.length === 0) {
@@ -201,6 +269,11 @@ async function getPackageJsonScripts(
     icon: string;
   }[] = [];
 
+  // Check if this is an Nx workspace
+  const isNxWorkspace = await vscode.workspace
+    .findFiles("{nx.json,workspace.json}", "**/node_modules/**", 1)
+    .then((files) => files.length > 0);
+
   for (const file of files) {
     try {
       const fileContent = fs.readFileSync(file.fsPath, "utf8");
@@ -216,7 +289,19 @@ async function getPackageJsonScripts(
       for (const scriptName of Object.keys(scripts)) {
         let finalCommand = `${pm} run ${scriptName}`;
 
-        if (relPath !== "") {
+        // For Nx workspaces, check if this is an Nx target script
+        const nxTargets = ["serve", "build", "test", "lint", "e2e"];
+        const isNxTargetScript =
+          isNxWorkspace && nxTargets.includes(scriptName.split(":")[0]);
+
+        if (isNxTargetScript) {
+          // For Nx target scripts, we'll handle project selection in handleCommand
+          finalCommand = `${pm} run ${scriptName}`;
+        } else if (isNxWorkspace) {
+          // For other Nx workspace scripts, run from workspace root
+          finalCommand = `${pm} run ${scriptName}`;
+        } else if (relPath !== "") {
+          // For non-Nx workspaces, use cwd flags for non-root packages
           if (pm === "yarn") {
             finalCommand = `yarn --cwd "${absPath}" run ${scriptName}`;
           } else if (pm === "pnpm") {
@@ -285,45 +370,74 @@ async function handleCommand(
   context: vscode.ExtensionContext,
 ) {
   const cli = context.globalState.get<string>("cli");
+  const pm = context.globalState.get<string>("packageManager") || "npm";
   let finalCommand = command;
 
-  if (cli === "nx") {
-    const isNxTarget = /\bnx\s+(serve|build|test|lint|e2e)(?:\s+-|$)/.test(
-      command,
-    );
-    const isNxGenerate =
-      /\bnx\s+(g|generate)\b/.test(command) && !command.includes("--project");
+  // Extract script name from package manager commands
+  // Matches: "run scriptName", "script scriptName"
+  const scriptMatch = command.match(/(?:run|script)\s+([a-z0-9:_-]+)/i);
+  const scriptName = scriptMatch?.[1];
 
-    if (isNxTarget || isNxGenerate) {
-      const projects = await getNxProjects();
+  // Known Nx targets
+  const nxTargets = ["serve", "build", "test", "lint", "e2e"];
 
-      if (projects.length > 0) {
-        const lang = context.globalState.get<string>("language") || "en";
-        const placeHolder =
-          lang === "de"
-            ? "Wähle das Projekt (App/Lib) aus..."
-            : "Select the project (App/Lib)...";
+  // Check if it's an explicit nx/ng command with a target
+  const isExplicitNxTarget =
+    /\b(nx|ng)\s+(serve|build|test|lint|e2e)(?:\s|-|$)/.test(command);
 
-        const selected = await vscode.window.showQuickPick(projects, {
-          placeHolder,
-        });
+  // Check if it's a script that maps to an Nx target (e.g., "lint" -> "nx lint")
+  const isNxTargetScript =
+    scriptName && nxTargets.includes(scriptName.split(":")[0]);
 
-        if (!selected) {
-          return;
-        }
+  if (isExplicitNxTarget || isNxTargetScript) {
+    const projects = await getNxProjects();
 
-        if (isNxTarget) {
-          const targetMatch = finalCommand.match(
-            /\bnx\s+(serve|build|test|lint|e2e)/,
-          );
-          if (targetMatch) {
-            finalCommand = finalCommand.replace(
-              targetMatch[0],
-              `${targetMatch[0]} ${selected}`,
-            );
+    if (projects.length > 0) {
+      const lang = context.globalState.get<string>("language") || "en";
+      const placeHolder =
+        lang === "de"
+          ? "Wähle das Projekt (App/Lib) aus..."
+          : "Select the project (App/Lib)...";
+
+      const selected = await vscode.window.showQuickPick(projects, {
+        placeHolder,
+      });
+
+      if (!selected) {
+        return;
+      }
+
+      if (isExplicitNxTarget) {
+        // Handle explicit commands like "nx lint" or "ng build"
+        const targetMatch = finalCommand.match(
+          /\b(nx|ng)\s+(serve|build|test|lint|e2e)/,
+        );
+        if (targetMatch) {
+          const tool = targetMatch[1]; // "nx" or "ng"
+          const target = targetMatch[2];
+          if (tool === "nx") {
+            if (pm === "yarn") {
+              finalCommand = `yarn nx ${target} ${selected}`;
+            } else if (pm === "pnpm") {
+              finalCommand = `pnpm nx ${target} ${selected}`;
+            } else {
+              finalCommand = `npx nx ${target} ${selected}`;
+            }
+          } else {
+            // For ng commands, use npx
+            finalCommand = `npx ng ${target} ${selected}`;
           }
-        } else if (isNxGenerate) {
-          finalCommand += ` --project="${selected}"`;
+        }
+      } else if (isNxTargetScript) {
+        // Handle script calls that map to Nx targets
+        // Convert "yarn run lint" to "yarn nx lint project" or "npx nx lint project"
+        const target = scriptName.split(":")[0]; // Extract target from script name
+        if (pm === "yarn") {
+          finalCommand = `yarn nx ${target} ${selected}`;
+        } else if (pm === "pnpm") {
+          finalCommand = `pnpm nx ${target} ${selected}`;
+        } else {
+          finalCommand = `npx nx ${target} ${selected}`;
         }
       }
     }
@@ -736,6 +850,13 @@ class NgCommanderViewProvider implements vscode.WebviewViewProvider {
     </div>
     <input id="f-command" data-i18n-placeholder="formCmd" placeholder="Command (e.g. ng build --configuration staging)" />
     <input id="f-icon" data-i18n-placeholder="formIcon" placeholder="Icon Emoji (optional, e.g. 🎯)" />
+    <div class="form-row">
+      <input id="f-cwd" data-i18n-placeholder="formCwd" placeholder="Working Directory (optional)" />
+      <select id="f-scope">
+        <option value="global" data-i18n="scopeGlobal">Global</option>
+        <option value="local" data-i18n="scopeLocal">Local (Project)</option>
+      </select>
+    </div>
     <button class="btn-primary" onclick="addCustom()" data-i18n="formBtnSubmit">Add</button>
   </div>
 </div>
@@ -758,7 +879,7 @@ let formOpen = false;
 
 const i18n = {
   en: {
-    tabMain: "Standard",
+    tabMain: "Befehle",
     tabProject: "Workspace",
     settingsTitle: "⚙️ Settings",
     settingsDesc: "Please choose your preferences:",
@@ -775,7 +896,11 @@ const i18n = {
     formLabel: "Label (e.g. Build Staging)",
     formCmd: "Command (e.g. ng build --configuration staging)",
     formIcon: "Icon Emoji (optional, e.g. 🎯)",
+    formCwd: "Working Directory (optional)",
+    scopeGlobal: "Global",
+    scopeLocal: "Local (Project)",
     formBtnSubmit: "Add",
+    formBtnEdit: "Edit",
     projectDesc: "Scan all package.json files in your workspace.",
     btnScan: "Scan Scripts",
     noCustom: "No custom commands yet",
@@ -788,7 +913,7 @@ const i18n = {
     colorPurple: "Purple"
   },
   de: {
-    tabMain: "Standard",
+    tabMain: "Befehle",
     tabProject: "Workspace",
     settingsTitle: "⚙️ Einstellungen",
     settingsDesc: "Bitte wähle deine Einstellungen:",
@@ -805,7 +930,11 @@ const i18n = {
     formLabel: "Label (z.B. Build Staging)",
     formCmd: "Befehl (z.B. ng build --configuration staging)",
     formIcon: "Icon Emoji (optional, z.B. 🎯)",
+    formCwd: "Arbeitsverzeichnis (optional)",
+    scopeGlobal: "Global",
+    scopeLocal: "Lokal (Projekt)",
     formBtnSubmit: "Hinzufügen",
+    formBtnEdit: "Bearbeiten",
     projectDesc: "Scanne alle package.json in deinem Workspace.",
     btnScan: "Skripte scannen",
     noCustom: "Noch keine eigenen Befehle",
@@ -977,25 +1106,92 @@ function renderDefaultCommands(pm, cli) {
 function renderCustom() {
   const list = document.getElementById('custom-list');
   list.innerHTML = '';
+
   if (customCommands.length === 0) {
     list.innerHTML = '<div id="no-custom">' + i18n[currentLang].noCustom + '</div>';
     return;
   }
-  customCommands.forEach((cmd, i) => {
-    const row = document.createElement('div');
-    row.className = 'custom-item';
-    row.innerHTML =
-      '<button class="cmd-btn ' + (cmd.color || 'custom') + '" title="' + cmd.command + '" onclick="runCustom(' + i + ')">' +
-        '<span class="cmd-icon">' + (cmd.icon || '⚡') + '</span>' +
-        '<span class="cmd-label">' + cmd.label + '</span>' +
-      '</button>' +
-      '<button class="del-btn" onclick="deleteCustom(' + i + ')">✕</button>';
-    list.appendChild(row);
-  });
+
+  // Group commands by scope with their original indices
+  const globalCmds = customCommands.map((cmd, index) => ({ cmd, index })).filter(item => item.cmd.scope !== 'local');
+  const localCmds = customCommands.map((cmd, index) => ({ cmd, index })).filter(item => item.cmd.scope === 'local');
+
+  // Render global commands
+  if (globalCmds.length > 0) {
+    const globalHeader = document.createElement('h3');
+    globalHeader.textContent = 'Global';
+    globalHeader.style.fontSize = '10px';
+    globalHeader.style.fontWeight = '700';
+    globalHeader.style.letterSpacing = '1.5px';
+    globalHeader.style.textTransform = 'uppercase';
+    globalHeader.style.color = 'var(--muted)';
+    globalHeader.style.margin = '12px 0 6px';
+    globalHeader.style.paddingBottom = '4px';
+    globalHeader.style.borderBottom = '1px solid var(--border)';
+    list.appendChild(globalHeader);
+
+    globalCmds.forEach((item) => {
+      const row = document.createElement('div');
+      row.className = 'custom-item';
+      row.innerHTML =
+        '<button class="cmd-btn ' + (item.cmd.color || 'custom') + '" title="' + item.cmd.command + '" onclick="runCustom(' + item.index + ')">' +
+          '<span class="cmd-icon">' + (item.cmd.icon || '⚡') + '</span>' +
+          '<span class="cmd-label">' + item.cmd.label + '</span>' +
+        '</button>' +
+        '<button class="icon-btn" onclick="editCustom(' + item.index + ')" title="Edit">✏️</button>' +
+        '<button class="del-btn" onclick="deleteCustom(' + item.index + ')">✕</button>';
+      list.appendChild(row);
+    });
+  }
+
+  // Render local commands
+  if (localCmds.length > 0) {
+    const localHeader = document.createElement('h3');
+    localHeader.textContent = 'Lokal';
+    localHeader.style.fontSize = '10px';
+    localHeader.style.fontWeight = '700';
+    localHeader.style.letterSpacing = '1.5px';
+    localHeader.style.textTransform = 'uppercase';
+    localHeader.style.color = 'var(--muted)';
+    localHeader.style.margin = '12px 0 6px';
+    localHeader.style.paddingBottom = '4px';
+    localHeader.style.borderBottom = '1px solid var(--border)';
+    list.appendChild(localHeader);
+
+    localCmds.forEach((item) => {
+      const row = document.createElement('div');
+      row.className = 'custom-item';
+      row.innerHTML =
+        '<button class="cmd-btn ' + (item.cmd.color || 'custom') + '" title="' + item.cmd.command + '" onclick="runCustom(' + item.index + ')">' +
+          '<span class="cmd-icon">' + (item.cmd.icon || '⚡') + '</span>' +
+          '<span class="cmd-label">' + item.cmd.label + '</span>' +
+        '</button>' +
+        '<button class="icon-btn" onclick="editCustom(' + item.index + ')" title="Edit">✏️</button>' +
+        '<button class="del-btn" onclick="deleteCustom(' + item.index + ')">✕</button>';
+      list.appendChild(row);
+    });
+  }
 }
 
 function runCustom(i) {
-  vscode.postMessage({ type: 'run', command: customCommands[i].command });
+  const cmd = customCommands[i];
+  vscode.postMessage({ type: 'run', command: cmd.command, cwd: cmd.cwd });
+}
+
+function editCustom(i) {
+  const cmd = customCommands[i];
+  document.getElementById('f-label').value = cmd.label;
+  document.getElementById('f-command').value = cmd.command;
+  document.getElementById('f-color').value = cmd.color || 'custom';
+  document.getElementById('f-icon').value = cmd.icon || '';
+  document.getElementById('f-cwd').value = cmd.cwd || '';
+  document.getElementById('f-scope').value = cmd.scope || 'global';
+
+  // Set editing mode
+  document.getElementById('add-form').setAttribute('data-editing', i.toString());
+  document.getElementById('formBtnSubmit').textContent = i18n[currentLang].formBtnEdit || 'Edit';
+
+  if (!formOpen) toggleForm();
 }
 
 function deleteCustom(i) {
@@ -1008,6 +1204,19 @@ function toggleForm() {
   formOpen = !formOpen;
   document.getElementById('add-form').classList.toggle('open', formOpen);
   document.getElementById('toggle-icon').textContent = formOpen ? '−' : '＋';
+
+  if (!formOpen) {
+    // Reset form when closing
+    document.getElementById('f-label').value = '';
+    document.getElementById('f-command').value = '';
+    document.getElementById('f-icon').value = '';
+    document.getElementById('f-cwd').value = '';
+    document.getElementById('f-label').style.borderColor = '';
+    document.getElementById('f-command').style.borderColor = '';
+    document.getElementById('add-form').removeAttribute('data-editing');
+    document.getElementById('formBtnSubmit').textContent = i18n[currentLang].formBtnSubmit;
+  }
+
   document.getElementById('toggle-text').textContent = formOpen ? i18n[currentLang].btnCancel : i18n[currentLang].btnAddCustom;
 }
 
@@ -1016,6 +1225,8 @@ function addCustom() {
   const command = document.getElementById('f-command').value.trim();
   const color = document.getElementById('f-color').value;
   const icon = document.getElementById('f-icon').value.trim() || '⚡';
+  const cwd = document.getElementById('f-cwd').value.trim();
+  const scope = document.getElementById('f-scope').value;
 
   if (!label || !command) {
     document.getElementById('f-label').style.borderColor = label ? '' : '#ef4444';
@@ -1023,15 +1234,46 @@ function addCustom() {
     return;
   }
 
-  customCommands.push({ id: 'custom-' + Date.now(), label, command, group: 'Custom', color, icon });
+  const editingIndex = document.getElementById('add-form').getAttribute('data-editing');
+
+  if (editingIndex !== null) {
+    // Edit existing command
+    const index = parseInt(editingIndex);
+    customCommands[index] = {
+      ...customCommands[index],
+      label,
+      command,
+      color,
+      icon,
+      cwd: cwd || undefined,
+      scope: scope || undefined
+    };
+  } else {
+    // Add new command
+    customCommands.push({
+      id: 'custom-' + Date.now(),
+      label,
+      command,
+      group: 'Custom',
+      color,
+      icon,
+      cwd: cwd || undefined,
+      scope: scope || undefined
+    });
+  }
+
   vscode.postMessage({ type: 'saveCustomCommands', commands: customCommands });
   renderCustom();
 
+  // Reset form
   document.getElementById('f-label').value = '';
   document.getElementById('f-command').value = '';
   document.getElementById('f-icon').value = '';
+  document.getElementById('f-cwd').value = '';
   document.getElementById('f-label').style.borderColor = '';
   document.getElementById('f-command').style.borderColor = '';
+  document.getElementById('add-form').removeAttribute('data-editing');
+  document.getElementById('formBtnSubmit').textContent = i18n[currentLang].formBtnSubmit;
   toggleForm();
 }
 </script>

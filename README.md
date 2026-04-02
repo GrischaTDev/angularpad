@@ -1,18 +1,22 @@
-# NG Commander
+# AngularPad
 
-Eine VS Code Extension, um Angular-, Lint- und Build-Befehle per Knopfdruck auszuführen.
+A VS Code extension that provides a command launchpad for Angular, Nx, and Node.js projects. Run build, lint, test, and custom commands with a single click.
 
 ## Features
 
-- **Vordefinierte Befehle** für Angular, Linting & Formatting, und NPM
-- **Eigene Befehle** hinzufügen und dauerhaft speichern
-- Alle Befehle laufen in einem dedizierten **NG Commander Terminal**
-- Befehle mit Eingabe (z.B. `ng generate component`) zeigen eine Eingabebox
+- **Predefined Commands** for Angular, Nx, linting, formatting, and package management
+- **Custom Commands** with persistent storage (global or project-specific)
+- **Workspace Scanning** to discover and import scripts from package.json files
+- **Nx Workspace Support** with automatic project selection for targets
+- **Package Manager Integration** (npm, yarn, pnpm) with proper command execution
+- All commands run in a dedicated **AngularPad Terminal**
+- Commands with input prompts (e.g., `ng generate component`) show input boxes
+- **Multi-language Support** (English/German)
 
-## Vordefinierte Befehle
+## Predefined Commands
 
 ### Angular
-| Label | Befehl |
+| Label | Command |
 |---|---|
 | Serve | `ng serve` |
 | Build | `ng build` |
@@ -23,31 +27,81 @@ Eine VS Code Extension, um Angular-, Lint- und Build-Befehle per Knopfdruck ausz
 | Generate Service | `ng generate service <name>` |
 
 ### Lint & Format
-| Label | Befehl |
+| Label | Command |
 |---|---|
 | Lint | `ng lint` |
 | Lint --fix | `ng lint --fix` |
 | Prettier | `npx prettier --write .` |
 
 ### Package Manager
-| Label | Befehl |
+| Label | Command |
 |---|---|
 | npm install | `npm install` |
 | npm update | `npm update` |
 | npm audit | `npm audit` |
 
-## Eigene Befehle
+## Nx Workspace Support
 
-Über das **„+ Befehl hinzufügen"** Formular können eigene Befehle mit Label, Icon-Emoji und Farbe angelegt werden. Diese werden dauerhaft in VS Code gespeichert.
+AngularPad automatically detects Nx workspaces and provides enhanced functionality:
 
-## Installation (Entwicklung)
+- **Project Selection**: For Nx targets (build, lint, test, etc.), automatically prompts to select the target project
+- **Workspace Root Execution**: Commands run from the correct workspace root directory
+- **Script Discovery**: Scans all package.json files and imports scripts with proper Nx integration
 
+## Custom Commands
+
+Add your own commands through the **"Add Command"** form with custom labels, icons, colors, and working directories. Commands can be stored globally (available in all workspaces) or locally (project-specific, automatically added to .gitignore).
+
+### Command Properties
+- **Label**: Display name for the command
+- **Command**: The actual command to execute
+- **Icon**: Emoji icon (optional)
+- **Color**: Visual category (Blue, Red, Yellow, Green, Purple)
+- **Working Directory**: Custom execution directory (optional)
+- **Scope**: Global or Local storage
+
+## Workspace Scanning
+
+The "Workspace" tab scans all package.json files in your project and imports available scripts. For Nx workspaces, scripts are executed from the workspace root with proper project resolution.
+
+## Settings
+
+Configure AngularPad through the settings modal (⚙️ button):
+
+- **Language**: English / German
+- **Workspace CLI**: Angular CLI or Nx
+- **Package Manager**: npm, yarn, or pnpm
+
+## Installation
+
+### From VS Code Marketplace
+Search for "AngularPad" in the VS Code Extensions marketplace.
+
+### Development Installation
 ```bash
+git clone https://github.com/GrischaTDev/angularpad
+cd angularpad
 npm install
 npm run compile
 ```
 
-Dann in VS Code: `F5` → Extension Development Host starten.
+Then in VS Code: `F5` → Launch Extension Development Host.
+
+## Usage
+
+1. Open the AngularPad panel from the activity bar (lightning bolt icon)
+2. Click any predefined command to execute it
+3. Use "Add Command" to create custom commands
+4. Use "Scan Scripts" in the Workspace tab to import project scripts
+5. Configure settings via the ⚙️ button
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues and pull requests.
+
+## License
+
+MIT License - see LICENSE file for details.
 
 ## Pakete installieren & VSIX bauen
 
