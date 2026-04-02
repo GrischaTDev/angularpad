@@ -1,12 +1,14 @@
 {
   "name": "angularpad",
+  "publisher": "GrischaTDev",
   "displayName": "AngularPad",
+  "icon": "resources/logo.png",
   "description": "Your Angular command launchpad — run ng, lint, and build commands with a single click.",
   "version": "0.1.0",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/DEIN-USERNAME/angularpad"
+    "url": "https://github.com/GrischaTDev/angularpad"
   },
   "engines": {
     "vscode": "^1.85.0"
