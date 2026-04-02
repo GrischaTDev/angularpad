@@ -4,7 +4,7 @@
   "displayName": "AngularPad",
   "icon": "resources/logo.png",
   "description": "Angular command launchpad for VS Code - run Angular, Nx, and custom commands with project selection and workspace scanning.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "license": "MIT",
   "repository": {
     "type": "git",
