@@ -48,16 +48,6 @@
           "icon": "resources/icon.svg"
         }
       ]
-    },
-    "configuration": {
-      "title": "AngularPad",
-      "properties": {
-        "angularpad.commands": {
-          "type": "array",
-          "default": [],
-          "description": "Custom commands list"
-        }
-      }
     }
   },
   "scripts": {

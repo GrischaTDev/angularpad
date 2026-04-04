@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}} 'unsafe-inline';">
+<title>AngularPad</title>
+<link rel="stylesheet" href="{{stylesUri}}">
+</head>
+<body>
+
+<div class="header-bar">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('main', event)" data-i18n="tabMain">Standard</button>
+    <button class="tab-btn" onclick="switchTab('project', event)" data-i18n="tabProject">Workspace</button>
+  </div>
+  <button class="icon-btn" onclick="openSettings()" title="Settings">⚙️</button>
+</div>
+
+<div id="settings-modal" class="modal-overlay">
+  <div class="modal-content">
+    <h3 data-i18n="settingsTitle">⚙️ Settings</h3>
+    <p style="color: var(--muted); margin-bottom: 12px;" data-i18n="settingsDesc">Please choose your preferences:</p>
+
+    <label style="display:block; margin-bottom:4px; color:var(--muted)" data-i18n="langLabel">Language / Sprache:</label>
+    <select id="modal-lang-select">
+      <option value="en">English</option>
+      <option value="de">Deutsch</option>
+    </select>
+
+    <label style="display:block; margin-top:8px; margin-bottom:4px; color:var(--muted)" data-i18n="cliLabel">Workspace CLI:</label>
+    <select id="modal-cli-select">
+      <option value="ng">Angular CLI (ng)</option>
+      <option value="nx">Nx Workspace (nx)</option>
+    </select>
+
+    <label style="display:block; margin-top:8px; margin-bottom:4px; color:var(--muted)" data-i18n="pmLabel">Package Manager:</label>
+    <select id="modal-pm-select">
+      <option value="npm">NPM</option>
+      <option value="yarn">Yarn</option>
+      <option value="pnpm">PNPM</option>
+    </select>
+
+    <button class="btn-primary" style="margin-top: 12px;" onclick="saveSettings()" data-i18n="btnSave">Save</button>
+  </div>
+</div>
+
+<div id="tab-main" class="tab-content active">
+  <h3 data-i18n="hdrAngular">Angular</h3>
+  <div class="cmd-grid" id="angular-grid"></div>
+
+  <h3 data-i18n="hdrLint">Lint & Format</h3>
+  <div class="cmd-grid" id="lint-grid"></div>
+
+  <h3 data-i18n="hdrPm">Package Manager</h3>
+  <div class="cmd-grid" id="npm-grid"></div>
+
+  <h3 data-i18n="hdrCustom">Custom Commands</h3>
+  <div id="custom-list"></div>
+
+  <button class="toggle-btn" onclick="toggleForm()">
+    <span id="toggle-icon">＋</span> <span id="toggle-text" data-i18n="btnAddCustom">Add Command</span>
+  </button>
+
+  <div class="add-form section" id="add-form">
+    <div class="form-group">
+      <label class="form-label" for="f-scope" data-i18n="lblScope">Scope</label>
+      <select id="f-scope">
+        <option value="global" data-i18n="scopeGlobal">Global</option>
+        <option value="local" data-i18n="scopeLocal">Local (Project)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="f-label" data-i18n="lblLabel">Label *</label>
+      <input id="f-label" data-i18n-placeholder="formLabel" placeholder="e.g. Build Staging" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="f-command" data-i18n="lblCommand">Command *</label>
+      <input id="f-command" data-i18n-placeholder="formCmd" placeholder="e.g. ng build --configuration staging" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="f-icon" data-i18n="lblIcon">Icon</label>
+        <input id="f-icon" data-i18n-placeholder="formIcon" placeholder="e.g. 🎯" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="f-color" data-i18n="lblColor">Color</label>
+        <select id="f-color">
+          <option value="custom" data-i18n="colorCustom">Blue (Custom)</option>
+          <option value="red" data-i18n="colorRed">Red (Angular)</option>
+          <option value="amber" data-i18n="colorAmber">Yellow (Lint)</option>
+          <option value="green" data-i18n="colorGreen">Green (NPM)</option>
+          <option value="purple" data-i18n="colorPurple">Purple</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="f-cwd" data-i18n="lblCwd">Working Directory</label>
+      <input id="f-cwd" data-i18n-placeholder="formCwd" placeholder="(optional)" />
+    </div>
+
+    <button id="formBtnSubmit" class="btn-primary" onclick="addCustom()" data-i18n="formBtnSubmit">Add</button>
+  </div>
+</div>
+
+<div id="tab-project" class="tab-content">
+  <p style="color: var(--muted); margin-bottom: 10px;" data-i18n="projectDesc">Scan all package.json files in your workspace.</p>
+  <button class="btn-primary" style="margin-bottom: 12px; display: flex; justify-content: center; align-items: center; gap: 6px;" onclick="scanProject()">
+    <span style="font-size: 14px;">🔍</span> <span data-i18n="btnScan">Scan Scripts</span>
+  </button>
+  <div class="cmd-grid" id="project-grid"></div>
+</div>
+
+<script>const DEFAULT_COMMANDS = {{defaultCommands}};</script>
+<script src="{{i18nUri}}"></script>
+<script src="{{mainUri}}"></script>
+</body>
+</html>

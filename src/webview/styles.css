@@ -1,0 +1,277 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: var(--vscode-sideBar-background, #1a1a2e);
+  --surface: var(--vscode-editor-background, #16213e);
+  --border: var(--vscode-panel-border, #0f3460);
+  --text: var(--vscode-foreground, #e0e0e0);
+  --muted: var(--vscode-descriptionForeground, #888);
+  --input-bg: var(--vscode-input-background, #0d1b2a);
+  --btn-hover: var(--vscode-button-hoverBackground, #1a4a6e);
+  --accent: #4fc3f7;
+  --red: #dd0031;
+  --amber: #f59e0b;
+  --green: #22c55e;
+  --purple: #a78bfa;
+}
+
+body {
+  font-family: var(--vscode-font-family, 'Segoe UI', sans-serif);
+  font-size: 12px;
+  color: var(--text);
+  background: var(--bg);
+  padding: 8px;
+  overflow-x: hidden;
+}
+
+.header-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-family: inherit;
+  transition: background 0.2s, color 0.2s;
+}
+.tab-btn:hover { background: var(--surface); }
+.tab-btn.active { color: var(--accent); background: var(--surface); }
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s, color 0.2s;
+}
+.icon-btn:hover { background: var(--surface); color: var(--accent); }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+
+.modal-content {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  width: 90%;
+  max-width: 260px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+.modal-content h3 { border-bottom: none; margin: 0 0 8px 0; color: var(--text); font-size: 13px; }
+
+h3 {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 12px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cmd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-bottom: 4px;
+}
+
+.cmd-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 11px;
+  font-family: inherit;
+  transition: all 0.15s ease;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.cmd-btn::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 5px 0 0 5px;
+}
+
+.cmd-btn.red::before { background: var(--red); }
+.cmd-btn.amber::before { background: var(--amber); }
+.cmd-btn.green::before { background: var(--green); }
+.cmd-btn.purple::before { background: var(--purple); }
+.cmd-btn.custom::before { background: var(--accent); }
+
+.cmd-btn:hover {
+  background: var(--btn-hover);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+}
+
+.cmd-btn:active { transform: translateY(0); }
+
+.cmd-icon { font-size: 13px; flex-shrink: 0; }
+.cmd-label { flex: 1; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.add-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  margin-top: 8px;
+}
+
+.form-group {
+  margin-bottom: 8px;
+}
+
+.form-group:last-of-type {
+  margin-bottom: 10px;
+}
+
+.form-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group select {
+  margin-bottom: 0;
+}
+
+.add-form input, .add-form select, .modal-content select {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 5px 8px;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 11px;
+  font-family: inherit;
+  outline: none;
+}
+.add-form input:focus, .add-form select:focus, .modal-content select:focus {
+  border-color: var(--accent);
+}
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+.btn-primary {
+  width: 100%;
+  padding: 6px;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 11px;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+.btn-primary:hover { opacity: 0.85; }
+
+.custom-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 5px;
+}
+
+.custom-item .cmd-btn { flex: 1; }
+
+.del-btn {
+  padding: 5px 7px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 12px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.del-btn:hover { background: rgba(239,68,68,0.15); }
+
+.toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 5px 0;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 11px;
+  font-family: inherit;
+  margin-top: 6px;
+}
+.toggle-btn:hover { opacity: 0.8; }
+
+.section { display: none; }
+.section.open { display: block; }
+
+#no-custom {
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+  padding: 8px 0;
+}
+
+.custom-group-header {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 12px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
