@@ -7,4 +7,6 @@ node_modules/**
 .gitattributes
 tsconfig.json
 package-lock.json
+AGENTS.md
+AI_CHANGES.md
 **/*.map
