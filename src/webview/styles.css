@@ -424,6 +424,15 @@ h3 {
 .pkg-affected-item:hover { background: var(--surface); }
 .pkg-affected-item input { width: auto; }
 .pkg-affected-info { display: flex; align-items: center; gap: 6px; flex: 1; overflow: hidden; }
+.pkg-affected-package {
+  font-size: 10px;
+  color: var(--accent);
+  font-family: var(--vscode-editor-font-family, monospace);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
 .pkg-affected-folder {
   font-size: 10px;
   color: var(--muted);
@@ -467,6 +476,10 @@ h3 {
   flex-wrap: wrap;
 }
 .pkg-diff-folder { color: var(--muted); font-size: 10px; }
+.pkg-diff-package {
+  color: var(--accent);
+  font-family: var(--vscode-editor-font-family, monospace);
+}
 .pkg-diff-old {
   color: #ef4444;
   text-decoration: line-through;

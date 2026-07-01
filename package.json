@@ -4,7 +4,7 @@
   "displayName": "AngularPad",
   "icon": "resources/logo.png",
   "description": "Angular command launchpad for VS Code - run Angular, Nx & custom commands, scan workspace scripts, and sync package.json versions across your monorepo with a diff preview.",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "license": "MIT",
   "repository": {
     "type": "git",

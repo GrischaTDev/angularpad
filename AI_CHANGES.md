@@ -16,3 +16,10 @@ repository must add an entry here in the same change set.
 - Files: `AGENTS.md`, `AI_CHANGES.md`, `.vscodeignore`.
 - Verification: `git diff --check` had no whitespace errors; `vsce package` passed and did not include `AGENTS.md` or `AI_CHANGES.md` in the VSIX.
 - Notes: Documents the release flow, version update rules, build/publish commands, and mandatory AI change logging. Excludes the agent docs from future VSIX packages.
+
+## 2026-07-01 - Codex (GPT-5)
+
+- Changed: Added scoped package group updates for Package Version Manager, clarified the Workspace tab description, and prepared release `0.8.0`.
+- Files: `src/webview/main.js`, `src/webview/i18n.js`, `src/webview/styles.css`, `README.md`, `CHANGELOG.md`, `package.json`, `package-lock.json`, `AI_CHANGES.md`.
+- Verification: `npm run compile`, `git diff --check`, `vsce package`, and `vsce publish --packagePath angularpad-0.8.0.vsix` passed.
+- Notes: Scoped dependencies such as `@nx/*` or `@lis/*` can be selected together through the package modal and saved with the existing diff preview/apply flow. Marketplace publish reported `Published GrischaTDev.angularpad v0.8.0.`

@@ -385,6 +385,30 @@ function buildPackageIndex() {
   return index;
 }
 
+function getPackageScope(name) {
+  if (!name.startsWith('@')) return '';
+  const slashIndex = name.indexOf('/');
+  return slashIndex > 0 ? name.slice(0, slashIndex) : '';
+}
+
+function buildScopeIndex(packageIndex) {
+  const scopeIndex = {};
+  Object.keys(packageIndex).forEach(name => {
+    const scope = getPackageScope(name);
+    if (!scope) return;
+
+    if (!scopeIndex[scope]) scopeIndex[scope] = [];
+    packageIndex[name].forEach(occ => {
+      scopeIndex[scope].push({ ...occ, name });
+    });
+  });
+  return scopeIndex;
+}
+
+function getPackageCount(occurrences) {
+  return new Set(occurrences.map(occ => occ.name)).size;
+}
+
 function renderPackages() {
   const list = document.getElementById('packages-list');
   const filterEl = document.getElementById('pkg-filter');
@@ -396,6 +420,7 @@ function renderPackages() {
   }
 
   const index = buildPackageIndex();
+  const scopeIndex = buildScopeIndex(index);
   list.innerHTML = '';
 
   packageData.forEach(file => {
@@ -437,6 +462,18 @@ function renderPackages() {
       editBtn.title = t('btnEditVersion');
       editBtn.onclick = () => openPackageModal(dep.name, dep.type, dep.version);
 
+      const scope = getPackageScope(dep.name);
+      const scopeOccurrences = scope ? scopeIndex[scope] || [] : [];
+      const hasScopeGroup = scope && getPackageCount(scopeOccurrences) > 1;
+      let scopeBtn;
+      if (hasScopeGroup) {
+        scopeBtn = document.createElement('button');
+        scopeBtn.className = 'icon-btn pkg-edit';
+        scopeBtn.textContent = '⇄';
+        scopeBtn.title = t('btnEditScope').replace('{scope}', scope);
+        scopeBtn.onclick = () => openScopeModal(scope, dep.version);
+      }
+
       row.appendChild(nameSpan);
       row.appendChild(badge);
       row.appendChild(verSpan);
@@ -447,6 +484,7 @@ function renderPackages() {
         warn.title = t('mismatchHint');
         row.appendChild(warn);
       }
+      if (scopeBtn) row.appendChild(scopeBtn);
       row.appendChild(editBtn);
       list.appendChild(row);
     });
@@ -479,6 +517,7 @@ function openPackageModal(name, type, version) {
     cb.id = rowId;
     cb.checked = true;
     cb.dataset.abspath = occ.absPath;
+    cb.dataset.name = name;
     cb.dataset.type = occ.type;
     cb.dataset.old = occ.version;
     cb.dataset.folder = occ.folder;
@@ -486,6 +525,59 @@ function openPackageModal(name, type, version) {
     const info = document.createElement('span');
     info.className = 'pkg-affected-info';
     info.innerHTML =
+      '<span class="pkg-affected-folder">📁 ' + escapeHtml(occ.folder) + '</span>' +
+      '<span class="pkg-badge pkg-badge-' + occ.type + '">' + (SECTION_SHORT[occ.type] || occ.type) + '</span>' +
+      '<span class="pkg-affected-ver">' + escapeHtml(occ.version) + '</span>';
+
+    label.appendChild(cb);
+    label.appendChild(info);
+    container.appendChild(label);
+  });
+
+  pkgModalStage = 'preview';
+  const applyBtn = document.getElementById('pkg-apply-btn');
+  applyBtn.textContent = t('btnPreview');
+  document.getElementById('package-modal').classList.add('open');
+}
+
+function openScopeModal(scope, version) {
+  const packageIndex = buildPackageIndex();
+  const scopeIndex = buildScopeIndex(packageIndex);
+  const occurrences = (scopeIndex[scope] || []).sort((a, b) => {
+    const nameCompare = a.name.localeCompare(b.name);
+    if (nameCompare !== 0) return nameCompare;
+    const folderCompare = a.folder.localeCompare(b.folder);
+    if (folderCompare !== 0) return folderCompare;
+    return a.type.localeCompare(b.type);
+  });
+
+  document.getElementById('pkg-modal-name').textContent = scope + '/*';
+  document.getElementById('pkg-new-version').value = version;
+  document.getElementById('pkg-diff').innerHTML = '';
+  document.getElementById('pkg-diff').classList.remove('open');
+
+  const container = document.getElementById('pkg-affected-list');
+  container.innerHTML = '';
+
+  occurrences.forEach((occ, i) => {
+    const rowId = 'pkg-aff-' + i;
+    const label = document.createElement('label');
+    label.className = 'pkg-affected-item';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.id = rowId;
+    cb.checked = true;
+    cb.dataset.abspath = occ.absPath;
+    cb.dataset.name = occ.name;
+    cb.dataset.type = occ.type;
+    cb.dataset.old = occ.version;
+    cb.dataset.folder = occ.folder;
+
+    const info = document.createElement('span');
+    info.className = 'pkg-affected-info';
+    info.innerHTML =
+      '<span class="pkg-affected-package">' + escapeHtml(occ.name) + '</span>' +
       '<span class="pkg-affected-folder">📁 ' + escapeHtml(occ.folder) + '</span>' +
       '<span class="pkg-badge pkg-badge-' + occ.type + '">' + (SECTION_SHORT[occ.type] || occ.type) + '</span>' +
       '<span class="pkg-affected-ver">' + escapeHtml(occ.version) + '</span>';
@@ -513,7 +605,7 @@ function collectSelectedChanges() {
   boxes.forEach(cb => {
     changes.push({
       absPath: cb.dataset.abspath,
-      name: name,
+      name: cb.dataset.name || name,
       type: cb.dataset.type,
       folder: cb.dataset.folder,
       oldVersion: cb.dataset.old,
@@ -548,6 +640,7 @@ function previewOrApply() {
     let html = '<div class="pkg-diff-title">' + t('diffTitle') + '</div>';
     changed.forEach(c => {
       html += '<div class="pkg-diff-row">' +
+        '<span class="pkg-diff-package">' + escapeHtml(c.name) + '</span> ' +
         '<span class="pkg-diff-folder">📁 ' + escapeHtml(c.folder) + '</span> ' +
         '<span class="pkg-badge pkg-badge-' + c.type + '">' + (SECTION_SHORT[c.type] || c.type) + '</span> ' +
         '<span class="pkg-diff-old">' + escapeHtml(c.oldVersion) + '</span>' +

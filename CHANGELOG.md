@@ -5,6 +5,18 @@ All notable changes to the **AngularPad** extension are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-07-01
+
+### Added
+
+- Package Version Manager: scoped package groups such as `@nx/*` or `@lis/*`
+  can now be selected and updated together with the existing diff preview.
+
+### Changed
+
+- Workspace tab description now clarifies that package.json files are scanned to
+  show their scripts.
+
 ## [0.7.0] - 2026-07-01
 
 ### Added
@@ -61,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release: command launchpad panel with one-click Angular commands
   running in a dedicated AngularPad terminal.
 
+[0.8.0]: https://github.com/GrischaTDev/angularpad
 [0.7.0]: https://github.com/GrischaTDev/angularpad
 [0.3.1]: https://github.com/GrischaTDev/angularpad
 [0.3.0]: https://github.com/GrischaTDev/angularpad

@@ -7,7 +7,7 @@ A VS Code extension that provides a command launchpad for Angular, Nx, and Node.
 - **Predefined Commands** for Angular, Nx, linting, formatting, and package management
 - **Custom Commands** with persistent storage (global or project-specific)
 - **Workspace Scanning** to discover and import scripts from package.json files
-- **Package Version Manager** to find all package.json files by folder and update a dependency version across several of them at once, with a diff preview before saving
+- **Package Version Manager** to find all package.json files by folder and update a dependency version across several of them at once, including scoped groups such as `@nx/*`, with a diff preview before saving
 - **Nx Workspace Support** with automatic project selection for targets
 - **Package Manager Integration** (npm, yarn, pnpm) with proper command execution
 - All commands run in a dedicated **AngularPad Terminal**
@@ -72,6 +72,7 @@ The **"Packages"** tab finds every `package.json` in the workspace (excluding `n
 - **Scan Dependencies**: lists all `dependencies`, `devDependencies`, `peerDependencies` and `optionalDependencies` per folder, with a filter box.
 - **Version mismatch highlighting**: a package used with different versions across files is flagged with ⚠, so inconsistencies are easy to spot.
 - **Edit across files**: click ✏️ on any package to open a modal, set a new version, and choose (via checkboxes) which of the other `package.json` files that contain the same package should be updated too — a search & replace across all of them.
+- **Edit package groups**: for scoped packages such as `@nx/angular`, `@nx/js` or `@lis/*`, use the group action to update all packages in the same scope together.
 - **Diff preview**: before anything is written, a preview shows exactly which file changes from which version to which (old → new). Nothing is saved until you confirm.
 - **Install offer**: after saving, a banner offers to run `install` (npm/yarn/pnpm, matching your settings) in the AngularPad terminal.
 
