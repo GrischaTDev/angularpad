@@ -5,6 +5,11 @@ import { Command } from "./types";
 import { DEFAULT_COMMANDS, handleCommand } from "./commands";
 import { getLocalCommands, saveLocalCommands } from "./local-commands";
 import { getPackageJsonScripts } from "./nx";
+import {
+  getWorkspaceDependencies,
+  applyVersionChanges,
+  VersionChange,
+} from "./packages";
 
 export class NgCommanderViewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
@@ -104,6 +109,38 @@ export class NgCommanderViewProvider implements vscode.WebviewViewProvider {
               scripts: scripts,
             });
           });
+          break;
+        }
+        case "getDependencies": {
+          getWorkspaceDependencies().then((packages) => {
+            webviewView.webview.postMessage({
+              type: "dependencies",
+              packages: packages,
+            });
+          });
+          break;
+        }
+        case "applyVersionChanges": {
+          applyVersionChanges(msg.changes as VersionChange[]).then(
+            (applied) => {
+              const failed = applied.filter((a) => !a.ok);
+              const succeeded = applied.filter((a) => a.ok);
+              if (succeeded.length > 0) {
+                vscode.window.showInformationMessage(
+                  `AngularPad: ${succeeded.length} Version(en) in package.json aktualisiert.`,
+                );
+              }
+              if (failed.length > 0) {
+                vscode.window.showWarningMessage(
+                  `AngularPad: ${failed.length} Änderung(en) konnten nicht angewendet werden.`,
+                );
+              }
+              webviewView.webview.postMessage({
+                type: "dependenciesApplied",
+                applied: applied,
+              });
+            },
+          );
           break;
         }
       }

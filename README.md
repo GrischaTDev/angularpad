@@ -1,12 +1,13 @@
 # AngularPad
 
-A VS Code extension that provides a command launchpad for Angular, Nx, and Node.js projects. Run build, lint, test, and custom commands with a single click.
+A VS Code extension that provides a command launchpad for Angular, Nx, and Node.js projects. Run build, lint, test, and custom commands with a single click — and keep dependency versions in sync across every `package.json` in your workspace.
 
 ## Features
 
 - **Predefined Commands** for Angular, Nx, linting, formatting, and package management
 - **Custom Commands** with persistent storage (global or project-specific)
 - **Workspace Scanning** to discover and import scripts from package.json files
+- **Package Version Manager** to find all package.json files by folder and update a dependency version across several of them at once, with a diff preview before saving
 - **Nx Workspace Support** with automatic project selection for targets
 - **Package Manager Integration** (npm, yarn, pnpm) with proper command execution
 - All commands run in a dedicated **AngularPad Terminal**
@@ -64,6 +65,18 @@ Add your own commands through the **"Add Command"** form with custom labels, ico
 
 The "Workspace" tab scans all package.json files in your project and imports available scripts. For Nx workspaces, scripts are executed from the workspace root with proper project resolution.
 
+## Packages (Version Manager)
+
+The **"Packages"** tab finds every `package.json` in the workspace (excluding `node_modules`) and lists their dependencies grouped by folder location (root, lib, etc.). It is built for keeping versions in sync across a monorepo or multi-project workspace:
+
+- **Scan Dependencies**: lists all `dependencies`, `devDependencies`, `peerDependencies` and `optionalDependencies` per folder, with a filter box.
+- **Version mismatch highlighting**: a package used with different versions across files is flagged with ⚠, so inconsistencies are easy to spot.
+- **Edit across files**: click ✏️ on any package to open a modal, set a new version, and choose (via checkboxes) which of the other `package.json` files that contain the same package should be updated too — a search & replace across all of them.
+- **Diff preview**: before anything is written, a preview shows exactly which file changes from which version to which (old → new). Nothing is saved until you confirm.
+- **Install offer**: after saving, a banner offers to run `install` (npm/yarn/pnpm, matching your settings) in the AngularPad terminal.
+
+Indentation (spaces or tabs), key order and trailing newline of each `package.json` are preserved, so changes stay minimal and git-friendly.
+
 ## Settings
 
 Configure AngularPad through the settings modal (⚙️ button):
@@ -93,7 +106,8 @@ Then in VS Code: `F5` → Launch Extension Development Host.
 2. Click any predefined command to execute it
 3. Use "Add Command" to create custom commands
 4. Use "Scan Scripts" in the Workspace tab to import project scripts
-5. Configure settings via the ⚙️ button
+5. Use "Scan Dependencies" in the Packages tab to review and align package versions across all package.json files
+6. Configure settings via the ⚙️ button
 
 ## Contributing
 

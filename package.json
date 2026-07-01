@@ -3,8 +3,8 @@
   "publisher": "GrischaTDev",
   "displayName": "AngularPad",
   "icon": "resources/logo.png",
-  "description": "Angular command launchpad for VS Code - run Angular, Nx, and custom commands with project selection and workspace scanning.",
-  "version": "0.3.1",
+  "description": "Angular command launchpad for VS Code - run Angular, Nx & custom commands, scan workspace scripts, and sync package.json versions across your monorepo with a diff preview.",
+  "version": "0.4.0",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -15,6 +15,17 @@
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "angular",
+    "nx",
+    "monorepo",
+    "package.json",
+    "dependencies",
+    "npm",
+    "yarn",
+    "pnpm",
+    "launchpad"
   ],
   "activationEvents": [],
   "main": "./out/extension.js",

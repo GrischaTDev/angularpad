@@ -13,12 +13,14 @@
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('main', event)" data-i18n="tabMain">Standard</button>
     <button class="tab-btn" onclick="switchTab('project', event)" data-i18n="tabProject">Workspace</button>
+    <button class="tab-btn" onclick="switchTab('packages', event)" data-i18n="tabPackages">Pakete</button>
   </div>
   <button class="icon-btn" onclick="openSettings()" title="Settings">⚙️</button>
 </div>
 
 <div id="settings-modal" class="modal-overlay">
   <div class="modal-content">
+    <button class="modal-close" onclick="closeSettings()" title="Close" aria-label="Close">✕</button>
     <h3 data-i18n="settingsTitle">⚙️ Settings</h3>
     <p style="color: var(--muted); margin-bottom: 12px;" data-i18n="settingsDesc">Please choose your preferences:</p>
 
@@ -113,6 +115,37 @@
     <span style="font-size: 14px;">🔍</span> <span data-i18n="btnScan">Scan Scripts</span>
   </button>
   <div class="cmd-grid" id="project-grid"></div>
+</div>
+
+<div id="tab-packages" class="tab-content">
+  <p style="color: var(--muted); margin-bottom: 10px;" data-i18n="packagesDesc">Find all package.json files and change package versions across them at once.</p>
+  <div style="display:flex; gap:6px; margin-bottom:12px;">
+    <button class="btn-primary" style="flex:1; display:flex; justify-content:center; align-items:center; gap:6px;" onclick="scanDependencies()">
+      <span style="font-size: 14px;">🔍</span> <span data-i18n="btnScanDeps">Scan Dependencies</span>
+    </button>
+    <input id="pkg-filter" class="pkg-filter" data-i18n-placeholder="pkgFilter" placeholder="Filter..." oninput="renderPackages()" />
+  </div>
+  <div id="pkg-install-banner" class="pkg-banner"></div>
+  <div id="packages-list"></div>
+</div>
+
+<div id="package-modal" class="modal-overlay">
+  <div class="modal-content pkg-modal">
+    <h3><span data-i18n="pkgEditTitle">Change version</span>: <span id="pkg-modal-name" class="pkg-modal-name"></span></h3>
+
+    <label style="display:block; margin-bottom:4px; color:var(--muted)" data-i18n="lblNewVersion">New version:</label>
+    <input id="pkg-new-version" placeholder="^1.0.0" />
+
+    <label style="display:block; margin-top:10px; margin-bottom:4px; color:var(--muted)" data-i18n="lblAffected">Apply to these package.json files:</label>
+    <div id="pkg-affected-list" class="pkg-affected-list"></div>
+
+    <div id="pkg-diff" class="pkg-diff"></div>
+
+    <div class="pkg-modal-actions">
+      <button class="btn-secondary" onclick="closePackageModal()" data-i18n="btnCancel">Cancel</button>
+      <button class="btn-primary" id="pkg-apply-btn" onclick="previewOrApply()" data-i18n="btnPreview">Preview</button>
+    </div>
+  </div>
 </div>
 
 <script>const DEFAULT_COMMANDS = {{defaultCommands}};</script>
