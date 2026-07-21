@@ -5,6 +5,13 @@ repository must add an entry here in the same change set.
 
 ## 2026-07-21 - Codex (GPT-5)
 
+- Changed: Released AngularPad `0.9.0` to the VS Code Marketplace and aligned the release metadata and package exclusions.
+- Files: `.vscodeignore`, `package.json`, `package-lock.json`, `CHANGELOG.md`, `AI_CHANGES.md`.
+- Verification: `npm run compile` passed; `vsce package` created the cleaned `angularpad-0.9.0.vsix` with 24 files and without temporary `.superpowers` artifacts; `vsce publish --packagePath angularpad-0.9.0.vsix` published successfully; duplicate-safe publish reported `Version 0.9.0 is already published. Skipping publish.`
+- Notes: The Marketplace accepted version `0.9.0`; `vsce show` still returned `0.8.0` immediately afterward because the Marketplace API cache had not refreshed yet.
+
+## 2026-07-21 - Codex (GPT-5)
+
 - Changed: Replaced the package version modal with a reusable full-size VS Code editor tab, changed the sidebar filter to package.json paths, added default bulk selection with deselect-all and automatic live previews, and added read-only external package.json comparison via file picker or drag-and-drop with selective local version transfer.
 - Files: `.vscodeignore`, `CHANGELOG.md`, `README.md`, `docs/superpowers/plans/2026-07-21-package-manager-editor.md`, `src/package-manager-panel.ts`, `src/provider.ts`, `src/webview/i18n.js`, `src/webview/index.html`, `src/webview/main.js`, `src/webview/styles.css`, `src/webview/package-manager-model.js`, `src/webview/package-manager.html`, `src/webview/package-manager.css`, `src/webview/package-manager.js`, `AI_CHANGES.md`.
 - Verification: `node --check` passed for all changed JavaScript files; `npm run compile` passed; focused source/UI contract checks confirmed path-only filtering, modal removal, beside-editor placement, read-only external file handling, asset order, and English/German key parity; `git diff --check` passed.

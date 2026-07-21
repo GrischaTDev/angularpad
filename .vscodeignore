@@ -10,4 +10,5 @@ package-lock.json
 AGENTS.md
 AI_CHANGES.md
 docs/superpowers/**
+.superpowers/**
 **/*.map
