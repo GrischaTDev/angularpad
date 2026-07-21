@@ -5,10 +5,10 @@ repository must add an entry here in the same change set.
 
 ## 2026-07-21 - Codex (GPT-5)
 
-- Changed: Documented the approved design for a full-size package manager editor tab and excluded temporary visual brainstorming artifacts.
-- Files: `.gitignore`, `docs/superpowers/specs/2026-07-21-package-manager-editor-design.md`, `AI_CHANGES.md`.
-- Verification: The specification self-review found no placeholders, contradictions, or unresolved scope; `git diff --check` passed.
-- Notes: Design variant A (path explorer with package details and live preview) is approved; implementation is pending.
+- Changed: Documented the approved design and implementation plan for a full-size package manager editor tab with read-only external `package.json` comparison, and excluded temporary visual brainstorming artifacts.
+- Files: `.gitignore`, `docs/superpowers/specs/2026-07-21-package-manager-editor-design.md`, `docs/superpowers/plans/2026-07-21-package-manager-editor.md`, `AI_CHANGES.md`.
+- Verification: The specification and plan self-review found no placeholders, contradictions, uncovered requirements, or inconsistent interfaces; `git diff --check` passed.
+- Notes: Design variant A and its integrated external comparison mode are approved; implementation is pending.
 
 ## 2026-07-01 - Codex (GPT-5)
 
