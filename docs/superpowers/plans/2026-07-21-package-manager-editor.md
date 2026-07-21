@@ -8,6 +8,10 @@
 
 **Tech Stack:** VS Code Extension API, TypeScript 5, plain HTML/CSS/JavaScript webviews, Node 20 built-in test runner.
 
+## Execution Note
+
+On 2026-07-21 the user explicitly declined an isolated worktree and additional automated tests. Implementation therefore proceeds on `main`, leaves the existing `AGENTS.md` modification untouched, skips all test-file and test-command steps below, and uses `npm run compile`, `git diff --check`, and a focused source/UI contract review as verification.
+
 ## Global Constraints
 
 - Do not add npm dependencies or change package versions.

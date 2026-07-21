@@ -5,7 +5,6 @@ let currentLang = 'en';
 let formOpen = false;
 let currentPm = 'npm';
 let packageData = [];
-let pkgModalStage = 'preview';
 
 function createCmdContent(icon, label) {
   const iconSpan = document.createElement('span');
@@ -423,9 +422,9 @@ function renderPackages() {
   const scopeIndex = buildScopeIndex(index);
   list.innerHTML = '';
 
-  packageData.forEach(file => {
-    const deps = file.deps.filter(d => !filter || d.name.toLowerCase().includes(filter));
-    if (deps.length === 0) return;
+  const filteredFiles = PackageManagerModel.filterPackageFiles(packageData, filter);
+  filteredFiles.forEach(file => {
+    const deps = file.deps;
 
     const header = document.createElement('div');
     header.className = 'pkg-folder-header';
@@ -460,7 +459,12 @@ function renderPackages() {
       editBtn.className = 'icon-btn pkg-edit';
       editBtn.textContent = '✏️';
       editBtn.title = t('btnEditVersion');
-      editBtn.onclick = () => openPackageModal(dep.name, dep.type, dep.version);
+      editBtn.onclick = () => openPackageManager(
+        'package',
+        dep.name,
+        dep.version,
+        file.absPath,
+      );
 
       const scope = getPackageScope(dep.name);
       const scopeOccurrences = scope ? scopeIndex[scope] || [] : [];
@@ -471,7 +475,12 @@ function renderPackages() {
         scopeBtn.className = 'icon-btn pkg-edit';
         scopeBtn.textContent = '⇄';
         scopeBtn.title = t('btnEditScope').replace('{scope}', scope);
-        scopeBtn.onclick = () => openScopeModal(scope, dep.version);
+        scopeBtn.onclick = () => openPackageManager(
+          'scope',
+          scope,
+          dep.version,
+          file.absPath,
+        );
       }
 
       row.appendChild(nameSpan);
@@ -495,179 +504,14 @@ function renderPackages() {
   }
 }
 
-function openPackageModal(name, type, version) {
-  const index = buildPackageIndex();
-  const occurrences = index[name] || [];
-
-  document.getElementById('pkg-modal-name').textContent = name;
-  document.getElementById('pkg-new-version').value = version;
-  document.getElementById('pkg-diff').innerHTML = '';
-  document.getElementById('pkg-diff').classList.remove('open');
-
-  const container = document.getElementById('pkg-affected-list');
-  container.innerHTML = '';
-
-  occurrences.forEach((occ, i) => {
-    const rowId = 'pkg-aff-' + i;
-    const label = document.createElement('label');
-    label.className = 'pkg-affected-item';
-
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.id = rowId;
-    cb.checked = true;
-    cb.dataset.abspath = occ.absPath;
-    cb.dataset.name = name;
-    cb.dataset.type = occ.type;
-    cb.dataset.old = occ.version;
-    cb.dataset.folder = occ.folder;
-
-    const info = document.createElement('span');
-    info.className = 'pkg-affected-info';
-    info.innerHTML =
-      '<span class="pkg-affected-folder">📁 ' + escapeHtml(occ.folder) + '</span>' +
-      '<span class="pkg-badge pkg-badge-' + occ.type + '">' + (SECTION_SHORT[occ.type] || occ.type) + '</span>' +
-      '<span class="pkg-affected-ver">' + escapeHtml(occ.version) + '</span>';
-
-    label.appendChild(cb);
-    label.appendChild(info);
-    container.appendChild(label);
+function openPackageManager(type, value, version, absPath) {
+  vscode.postMessage({
+    type: 'openPackageManager',
+    target: { type, value, version, absPath },
   });
-
-  pkgModalStage = 'preview';
-  const applyBtn = document.getElementById('pkg-apply-btn');
-  applyBtn.textContent = t('btnPreview');
-  document.getElementById('package-modal').classList.add('open');
-}
-
-function openScopeModal(scope, version) {
-  const packageIndex = buildPackageIndex();
-  const scopeIndex = buildScopeIndex(packageIndex);
-  const occurrences = (scopeIndex[scope] || []).sort((a, b) => {
-    const nameCompare = a.name.localeCompare(b.name);
-    if (nameCompare !== 0) return nameCompare;
-    const folderCompare = a.folder.localeCompare(b.folder);
-    if (folderCompare !== 0) return folderCompare;
-    return a.type.localeCompare(b.type);
-  });
-
-  document.getElementById('pkg-modal-name').textContent = scope + '/*';
-  document.getElementById('pkg-new-version').value = version;
-  document.getElementById('pkg-diff').innerHTML = '';
-  document.getElementById('pkg-diff').classList.remove('open');
-
-  const container = document.getElementById('pkg-affected-list');
-  container.innerHTML = '';
-
-  occurrences.forEach((occ, i) => {
-    const rowId = 'pkg-aff-' + i;
-    const label = document.createElement('label');
-    label.className = 'pkg-affected-item';
-
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.id = rowId;
-    cb.checked = true;
-    cb.dataset.abspath = occ.absPath;
-    cb.dataset.name = occ.name;
-    cb.dataset.type = occ.type;
-    cb.dataset.old = occ.version;
-    cb.dataset.folder = occ.folder;
-
-    const info = document.createElement('span');
-    info.className = 'pkg-affected-info';
-    info.innerHTML =
-      '<span class="pkg-affected-package">' + escapeHtml(occ.name) + '</span>' +
-      '<span class="pkg-affected-folder">📁 ' + escapeHtml(occ.folder) + '</span>' +
-      '<span class="pkg-badge pkg-badge-' + occ.type + '">' + (SECTION_SHORT[occ.type] || occ.type) + '</span>' +
-      '<span class="pkg-affected-ver">' + escapeHtml(occ.version) + '</span>';
-
-    label.appendChild(cb);
-    label.appendChild(info);
-    container.appendChild(label);
-  });
-
-  pkgModalStage = 'preview';
-  const applyBtn = document.getElementById('pkg-apply-btn');
-  applyBtn.textContent = t('btnPreview');
-  document.getElementById('package-modal').classList.add('open');
-}
-
-function closePackageModal() {
-  document.getElementById('package-modal').classList.remove('open');
-}
-
-function collectSelectedChanges() {
-  const newVersion = document.getElementById('pkg-new-version').value.trim();
-  const name = document.getElementById('pkg-modal-name').textContent;
-  const boxes = document.querySelectorAll('#pkg-affected-list input[type="checkbox"]:checked');
-  const changes = [];
-  boxes.forEach(cb => {
-    changes.push({
-      absPath: cb.dataset.abspath,
-      name: cb.dataset.name || name,
-      type: cb.dataset.type,
-      folder: cb.dataset.folder,
-      oldVersion: cb.dataset.old,
-      newVersion: newVersion,
-    });
-  });
-  return { name, newVersion, changes };
-}
-
-function previewOrApply() {
-  const { newVersion, changes } = collectSelectedChanges();
-  const verInput = document.getElementById('pkg-new-version');
-
-  if (!newVersion) {
-    verInput.style.borderColor = '#ef4444';
-    return;
-  }
-  verInput.style.borderColor = '';
-
-  if (changes.length === 0) return;
-
-  if (pkgModalStage === 'preview') {
-    const diffEl = document.getElementById('pkg-diff');
-    const changed = changes.filter(c => c.oldVersion !== c.newVersion);
-
-    if (changed.length === 0) {
-      diffEl.innerHTML = '<div class="pkg-diff-empty">' + t('noChanges') + '</div>';
-      diffEl.classList.add('open');
-      return;
-    }
-
-    let html = '<div class="pkg-diff-title">' + t('diffTitle') + '</div>';
-    changed.forEach(c => {
-      html += '<div class="pkg-diff-row">' +
-        '<span class="pkg-diff-package">' + escapeHtml(c.name) + '</span> ' +
-        '<span class="pkg-diff-folder">📁 ' + escapeHtml(c.folder) + '</span> ' +
-        '<span class="pkg-badge pkg-badge-' + c.type + '">' + (SECTION_SHORT[c.type] || c.type) + '</span> ' +
-        '<span class="pkg-diff-old">' + escapeHtml(c.oldVersion) + '</span>' +
-        '<span class="pkg-diff-arrow"> → </span>' +
-        '<span class="pkg-diff-new">' + escapeHtml(c.newVersion) + '</span>' +
-        '</div>';
-    });
-    diffEl.innerHTML = html;
-    diffEl.classList.add('open');
-
-    pkgModalStage = 'confirm';
-    document.getElementById('pkg-apply-btn').textContent = t('btnConfirmSave');
-  } else {
-    vscode.postMessage({
-      type: 'applyVersionChanges',
-      changes: changes.map(c => ({
-        absPath: c.absPath,
-        name: c.name,
-        type: c.type,
-        newVersion: c.newVersion,
-      })),
-    });
-  }
 }
 
 function onDependenciesApplied(applied) {
-  closePackageModal();
   const ok = applied.filter(a => a.ok && a.oldVersion !== a.newVersion);
 
   const banner = document.getElementById('pkg-install-banner');
@@ -679,8 +523,6 @@ function onDependenciesApplied(applied) {
     banner.classList.add('open');
   }
 
-  // Refresh the list so versions reflect the new state.
-  vscode.postMessage({ type: 'getDependencies' });
 }
 
 function runInstall() {

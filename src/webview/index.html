@@ -119,37 +119,19 @@
 
 <div id="tab-packages" class="tab-content">
   <p style="color: var(--muted); margin-bottom: 10px;" data-i18n="packagesDesc">Find all package.json files and change package versions across them at once.</p>
-  <div style="display:flex; gap:6px; margin-bottom:12px;">
-    <button class="btn-primary" style="flex:1; display:flex; justify-content:center; align-items:center; gap:6px;" onclick="scanDependencies()">
+  <div class="pkg-controls">
+    <button class="btn-primary pkg-scan-button" onclick="scanDependencies()">
       <span style="font-size: 14px;">🔍</span> <span data-i18n="btnScanDeps">Scan Dependencies</span>
     </button>
-    <input id="pkg-filter" class="pkg-filter" data-i18n-placeholder="pkgFilter" placeholder="Filter..." oninput="renderPackages()" />
+    <input id="pkg-filter" class="pkg-filter" type="search" data-i18n-placeholder="pathSearch" placeholder="Filter folder path..." oninput="renderPackages()" />
   </div>
   <div id="pkg-install-banner" class="pkg-banner"></div>
   <div id="packages-list"></div>
 </div>
 
-<div id="package-modal" class="modal-overlay">
-  <div class="modal-content pkg-modal">
-    <h3><span data-i18n="pkgEditTitle">Change version</span>: <span id="pkg-modal-name" class="pkg-modal-name"></span></h3>
-
-    <label style="display:block; margin-bottom:4px; color:var(--muted)" data-i18n="lblNewVersion">New version:</label>
-    <input id="pkg-new-version" placeholder="^1.0.0" />
-
-    <label style="display:block; margin-top:10px; margin-bottom:4px; color:var(--muted)" data-i18n="lblAffected">Apply to these package.json files:</label>
-    <div id="pkg-affected-list" class="pkg-affected-list"></div>
-
-    <div id="pkg-diff" class="pkg-diff"></div>
-
-    <div class="pkg-modal-actions">
-      <button class="btn-secondary" onclick="closePackageModal()" data-i18n="btnCancel">Cancel</button>
-      <button class="btn-primary" id="pkg-apply-btn" onclick="previewOrApply()" data-i18n="btnPreview">Preview</button>
-    </div>
-  </div>
-</div>
-
 <script>const DEFAULT_COMMANDS = {{defaultCommands}};</script>
 <script src="{{i18nUri}}"></script>
+<script src="{{packageManagerModelUri}}"></script>
 <script src="{{mainUri}}"></script>
 </body>
 </html>

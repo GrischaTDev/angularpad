@@ -5,6 +5,13 @@ repository must add an entry here in the same change set.
 
 ## 2026-07-21 - Codex (GPT-5)
 
+- Changed: Replaced the package version modal with a reusable full-size VS Code editor tab, changed the sidebar filter to package.json paths, added default bulk selection with deselect-all and automatic live previews, and added read-only external package.json comparison via file picker or drag-and-drop with selective local version transfer.
+- Files: `.vscodeignore`, `CHANGELOG.md`, `README.md`, `docs/superpowers/plans/2026-07-21-package-manager-editor.md`, `src/package-manager-panel.ts`, `src/provider.ts`, `src/webview/i18n.js`, `src/webview/index.html`, `src/webview/main.js`, `src/webview/styles.css`, `src/webview/package-manager-model.js`, `src/webview/package-manager.html`, `src/webview/package-manager.css`, `src/webview/package-manager.js`, `AI_CHANGES.md`.
+- Verification: `node --check` passed for all changed JavaScript files; `npm run compile` passed; focused source/UI contract checks confirmed path-only filtering, modal removal, beside-editor placement, read-only external file handling, asset order, and English/German key parity; `git diff --check` passed.
+- Notes: The user explicitly declined an isolated worktree and additional automated tests. No package version was bumped, published, or installed; the existing user change in `AGENTS.md` was left untouched.
+
+## 2026-07-21 - Codex (GPT-5)
+
 - Changed: Documented the approved design and implementation plan for a full-size package manager editor tab with read-only external `package.json` comparison, and excluded temporary visual brainstorming artifacts.
 - Files: `.gitignore`, `docs/superpowers/specs/2026-07-21-package-manager-editor-design.md`, `docs/superpowers/plans/2026-07-21-package-manager-editor.md`, `AI_CHANGES.md`.
 - Verification: The specification and plan self-review found no placeholders, contradictions, uncovered requirements, or inconsistent interfaces; `git diff --check` passed.

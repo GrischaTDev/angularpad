@@ -5,16 +5,33 @@ import { Command } from "./types";
 import { DEFAULT_COMMANDS, handleCommand } from "./commands";
 import { getLocalCommands, saveLocalCommands } from "./local-commands";
 import { getPackageJsonScripts } from "./nx";
+import { getWorkspaceDependencies } from "./packages";
 import {
-  getWorkspaceDependencies,
-  applyVersionChanges,
-  VersionChange,
-} from "./packages";
+  PackageManagerPanel,
+  PackageManagerTarget,
+} from "./package-manager-panel";
 
 export class NgCommanderViewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
+  private readonly _packageManagerPanel: PackageManagerPanel;
 
-  constructor(private readonly _context: vscode.ExtensionContext) {}
+  constructor(private readonly _context: vscode.ExtensionContext) {
+    this._packageManagerPanel = new PackageManagerPanel(
+      _context,
+      (packages, applied) => {
+        this._view?.webview.postMessage({
+          type: "dependencies",
+          packages,
+        });
+        if (applied) {
+          this._view?.webview.postMessage({
+            type: "dependenciesApplied",
+            applied,
+          });
+        }
+      },
+    );
+  }
 
   resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
@@ -120,27 +137,17 @@ export class NgCommanderViewProvider implements vscode.WebviewViewProvider {
           });
           break;
         }
-        case "applyVersionChanges": {
-          applyVersionChanges(msg.changes as VersionChange[]).then(
-            (applied) => {
-              const failed = applied.filter((a) => !a.ok);
-              const succeeded = applied.filter((a) => a.ok);
-              if (succeeded.length > 0) {
-                vscode.window.showInformationMessage(
-                  `AngularPad: ${succeeded.length} Version(en) in package.json aktualisiert.`,
-                );
-              }
-              if (failed.length > 0) {
-                vscode.window.showWarningMessage(
-                  `AngularPad: ${failed.length} Änderung(en) konnten nicht angewendet werden.`,
-                );
-              }
-              webviewView.webview.postMessage({
-                type: "dependenciesApplied",
-                applied: applied,
-              });
-            },
-          );
+        case "openPackageManager": {
+          const target = msg.target as PackageManagerTarget | undefined;
+          if (
+            target &&
+            (target.type === "package" || target.type === "scope") &&
+            typeof target.value === "string" &&
+            typeof target.version === "string" &&
+            typeof target.absPath === "string"
+          ) {
+            await this._packageManagerPanel.show(target);
+          }
           break;
         }
       }
@@ -163,6 +170,14 @@ export class NgCommanderViewProvider implements vscode.WebviewViewProvider {
     const mainUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this._context.extensionUri, "src", "webview", "main.js"),
     );
+    const packageManagerModelUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(
+        this._context.extensionUri,
+        "src",
+        "webview",
+        "package-manager-model.js",
+      ),
+    );
 
     const defaultCmds = JSON.stringify(DEFAULT_COMMANDS);
     const cspSource = webview.cspSource;
@@ -177,6 +192,10 @@ export class NgCommanderViewProvider implements vscode.WebviewViewProvider {
       .replace(/\{\{cspSource\}\}/g, cspSource)
       .replace(/\{\{stylesUri\}\}/g, stylesUri.toString())
       .replace(/\{\{i18nUri\}\}/g, i18nUri.toString())
+      .replace(
+        /\{\{packageManagerModelUri\}\}/g,
+        packageManagerModelUri.toString(),
+      )
       .replace(/\{\{mainUri\}\}/g, mainUri.toString())
       .replace(/\{\{defaultCommands\}\}/g, defaultCmds);
 

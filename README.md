@@ -69,11 +69,12 @@ The "Workspace" tab scans all package.json files in your project and imports ava
 
 The **"Packages"** tab finds every `package.json` in the workspace (excluding `node_modules`) and lists their dependencies grouped by folder location (root, lib, etc.). It is built for keeping versions in sync across a monorepo or multi-project workspace:
 
-- **Scan Dependencies**: lists all `dependencies`, `devDependencies`, `peerDependencies` and `optionalDependencies` per folder, with a filter box.
+- **Scan Dependencies**: lists all `dependencies`, `devDependencies`, `peerDependencies` and `optionalDependencies` per folder. The full-width search below the scan button filters `package.json` folder and file paths.
 - **Version mismatch highlighting**: a package used with different versions across files is flagged with ⚠, so inconsistencies are easy to spot.
-- **Edit across files**: click ✏️ on any package to open a modal, set a new version, and choose (via checkboxes) which of the other `package.json` files that contain the same package should be updated too — a search & replace across all of them.
+- **Full-size package editor**: click ✏️ on any package to open or reuse an AngularPad editor tab beside the active editor. Its path explorer shows every scanned `package.json`; the detail view includes complete paths, dependency types, current versions, a default full selection, and an **Deselect all** action.
 - **Edit package groups**: for scoped packages such as `@nx/angular`, `@nx/js` or `@lis/*`, use the group action to update all packages in the same scope together.
-- **Diff preview**: before anything is written, a preview shows exactly which file changes from which version to which (old → new). Nothing is saved until you confirm.
+- **Automatic live preview**: changing the version or selection immediately updates the old → new preview below the occurrence list. The save action stays disabled until at least one effective change exists.
+- **External package.json comparison**: choose a read-only reference file from anywhere on disk or drop it into the editor. AngularPad compares it with every scanned local package occurrence, visually marks equal, different, local-only, external-only, and ambiguous entries, and can transfer selected external versions to existing local packages without modifying or adding anything to the reference file.
 - **Install offer**: after saving, a banner offers to run `install` (npm/yarn/pnpm, matching your settings) in the AngularPad terminal.
 
 Indentation (spaces or tabs), key order and trailing newline of each `package.json` are preserved, so changes stay minimal and git-friendly.

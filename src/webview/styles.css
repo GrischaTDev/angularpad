@@ -299,8 +299,22 @@ h3 {
 
 /* ===== Packages / Dependencies ===== */
 
+.pkg-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.pkg-scan-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
 .pkg-filter {
-  width: 90px;
+  width: 100%;
   padding: 5px 8px;
   background: var(--input-bg);
   border: 1px solid var(--border);
@@ -386,132 +400,6 @@ h3 {
 
 .pkg-warn { color: var(--amber); font-size: 12px; flex-shrink: 0; }
 .pkg-edit { font-size: 12px; flex-shrink: 0; }
-
-/* Package modal */
-.pkg-modal { max-width: 320px; width: 92%; }
-.pkg-modal-name {
-  color: var(--accent);
-  font-family: var(--vscode-editor-font-family, monospace);
-}
-.pkg-modal input {
-  width: 100%;
-  padding: 6px 8px;
-  background: var(--input-bg);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text);
-  font-size: 12px;
-  font-family: var(--vscode-editor-font-family, monospace);
-  outline: none;
-}
-.pkg-modal input:focus { border-color: var(--accent); }
-
-.pkg-affected-list {
-  max-height: 150px;
-  overflow-y: auto;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 4px;
-}
-.pkg-affected-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px;
-  cursor: pointer;
-  border-radius: 4px;
-}
-.pkg-affected-item:hover { background: var(--surface); }
-.pkg-affected-item input { width: auto; }
-.pkg-affected-info { display: flex; align-items: center; gap: 6px; flex: 1; overflow: hidden; }
-.pkg-affected-package {
-  font-size: 10px;
-  color: var(--accent);
-  font-family: var(--vscode-editor-font-family, monospace);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-}
-.pkg-affected-folder {
-  font-size: 10px;
-  color: var(--muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-}
-.pkg-affected-ver {
-  font-size: 11px;
-  font-family: var(--vscode-editor-font-family, monospace);
-  color: var(--text);
-  flex-shrink: 0;
-}
-
-.pkg-diff {
-  display: none;
-  margin-top: 10px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 8px;
-  background: var(--input-bg);
-  max-height: 150px;
-  overflow-y: auto;
-}
-.pkg-diff.open { display: block; }
-.pkg-diff-title {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--muted);
-  margin-bottom: 6px;
-}
-.pkg-diff-empty { font-size: 11px; color: var(--muted); }
-.pkg-diff-row {
-  font-size: 11px;
-  padding: 2px 0;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  flex-wrap: wrap;
-}
-.pkg-diff-folder { color: var(--muted); font-size: 10px; }
-.pkg-diff-package {
-  color: var(--accent);
-  font-family: var(--vscode-editor-font-family, monospace);
-}
-.pkg-diff-old {
-  color: #ef4444;
-  text-decoration: line-through;
-  font-family: var(--vscode-editor-font-family, monospace);
-}
-.pkg-diff-new {
-  color: var(--green);
-  font-family: var(--vscode-editor-font-family, monospace);
-}
-.pkg-diff-arrow { color: var(--muted); }
-
-.pkg-modal-actions {
-  display: flex;
-  gap: 6px;
-  margin-top: 12px;
-}
-.pkg-modal-actions .btn-primary { flex: 1; }
-
-.btn-secondary {
-  flex: 1;
-  padding: 6px;
-  background: transparent;
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 11px;
-  font-family: inherit;
-  transition: background 0.15s;
-}
-.btn-secondary:hover { background: var(--surface); }
 
 .pkg-banner {
   display: none;
