@@ -3,6 +3,13 @@
 Project-local log of AI-made changes. Every AI agent that changes files in this
 repository must add an entry here in the same change set.
 
+## 2026-07-21 - Codex (GPT-5)
+
+- Changed: Documented the approved design for a full-size package manager editor tab and excluded temporary visual brainstorming artifacts.
+- Files: `.gitignore`, `docs/superpowers/specs/2026-07-21-package-manager-editor-design.md`, `AI_CHANGES.md`.
+- Verification: The specification self-review found no placeholders, contradictions, or unresolved scope; `git diff --check` passed.
+- Notes: Design variant A (path explorer with package details and live preview) is approved; implementation is pending.
+
 ## 2026-07-01 - Codex (GPT-5)
 
 - Changed: Released AngularPad `0.7.0` to the VS Code Marketplace and aligned release metadata.
