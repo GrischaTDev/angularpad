@@ -30,6 +30,21 @@
     <div class="path-filter-wrap">
       <label for="pkg-path-filter" data-i18n="pathSearchLabel">Search package.json paths</label>
       <input id="pkg-path-filter" type="search" data-i18n-placeholder="pathSearch" placeholder="Filter folder path...">
+      <div class="explorer-controls">
+        <label class="toggle-label">
+          <input id="pkg-only-conflicts" type="checkbox">
+          <span data-i18n="onlyRealConflicts">Only real conflicts</span>
+        </label>
+        <label class="toggle-label">
+          <input id="pkg-show-compatible" type="checkbox">
+          <span data-i18n="showCompatibleDifferences">Show compatible differences</span>
+        </label>
+        <div class="status-legend" aria-label="Version status">
+          <span class="version-status-identical" data-i18n="statusIdentical">Identical</span>
+          <span class="version-status-compatible" data-i18n="statusCompatible">Compatible</span>
+          <span class="version-status-conflict" data-i18n="statusConflict">Conflict</span>
+        </div>
+      </div>
     </div>
 
     <main class="manager-layout">
@@ -42,7 +57,6 @@
       </aside>
 
       <section id="pkg-detail" class="detail-panel" aria-live="polite">
-        <div id="detail-empty" class="empty-state" data-i18n="detailEmpty">Select a package in the path explorer.</div>
         <div id="detail-content" class="detail-content" hidden>
           <div class="detail-header">
             <div>
@@ -59,7 +73,10 @@
 
           <div class="selection-toolbar">
             <span id="selected-count"></span>
-            <button id="pkg-select-none" class="link-button" type="button" data-i18n="selectNone">Deselect all</button>
+            <div class="selection-actions">
+              <button id="pkg-select-all" class="link-button" type="button" data-i18n="selectAll">Select all</button>
+              <button id="pkg-select-none" class="link-button" type="button" data-i18n="selectNone">Deselect all</button>
+            </div>
           </div>
           <div id="pkg-occurrences" class="occurrence-list"></div>
 

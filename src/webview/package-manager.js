@@ -9,6 +9,12 @@ const SECTION_SHORT = {
   optionalDependencies: 'opt',
 };
 
+const VERSION_STATUS_KEYS = {
+  identical: 'statusIdentical',
+  compatible: 'statusCompatible',
+  conflict: 'statusConflict',
+};
+
 const STATUS_KEYS = {
   different: 'statusDifferent',
   equal: 'statusEqual',
@@ -90,13 +96,18 @@ function handleState(data) {
   currentLang = data.language || 'en';
   applyTranslations();
 
-  if (data.target && data.focusRevision !== focusRevision) {
+  if (data.focusRevision !== focusRevision) {
     focusRevision = data.focusRevision;
-    focusTarget = data.target;
-    activePath = data.target.absPath;
-    newVersion = data.target.version;
-    occurrences = model.getTargetOccurrences(packageFiles, focusTarget);
-    selectedKeys = model.createSelection(occurrences);
+    if (data.target) {
+      setFocusTarget(data.target);
+    } else {
+      focusTarget = undefined;
+      activePath = '';
+      occurrences = [];
+      selectedKeys = new Set();
+      newVersion = '';
+      selectFirstTarget();
+    }
     activeMode = 'project';
   } else if (focusTarget) {
     occurrences = model.getTargetOccurrences(packageFiles, focusTarget);
@@ -109,6 +120,7 @@ function handleState(data) {
   if (!activePath && packageFiles.length > 0) {
     activePath = packageFiles[0].absPath;
   }
+  if (!focusTarget) selectFirstTarget();
 
   renderExplorer();
   renderDetail();
@@ -119,7 +131,18 @@ function handleState(data) {
 
 function renderExplorer() {
   const query = element('pkg-path-filter').value;
-  const files = model.filterPackageFiles(packageFiles, query);
+  const onlyConflicts = element('pkg-only-conflicts').checked;
+  const showCompatible = element('pkg-show-compatible').checked;
+  const versionIndex = model.buildVersionStatusIndex(packageFiles);
+  const files = model
+    .filterPackageFiles(packageFiles, query)
+    .map(file => ({
+      ...file,
+      visibleDeps: onlyConflicts
+        ? file.deps.filter(dep => versionIndex.get(dep.name)?.hasConflict)
+        : file.deps,
+    }))
+    .filter(file => file.visibleDeps.length > 0);
   const container = element('pkg-explorer');
   container.replaceChildren();
   element('path-count').textContent = t('pathCount', { count: files.length });
@@ -133,6 +156,9 @@ function renderExplorer() {
     const group = document.createElement('div');
     group.className = 'path-group' + (file.absPath === activePath ? ' active' : '');
 
+    const pathHeader = document.createElement('div');
+    pathHeader.className = 'path-header';
+
     const pathButton = document.createElement('button');
     pathButton.type = 'button';
     pathButton.className = 'path-button';
@@ -141,27 +167,76 @@ function renderExplorer() {
       ? 'package.json'
       : file.folder + '/package.json';
     pathButton.appendChild(createTextNode('span', 'path-label', relativePath));
-    pathButton.appendChild(
-      createTextNode('span', 'count', t('packageCount', { count: file.deps.length })),
-    );
+    const fileSummary = model.getFileVersionSummary(file, versionIndex);
+    const summaryParts = [t('packageCount', { count: fileSummary.packageCount })];
+    if (fileSummary.conflictCount > 0) {
+      summaryParts.push(t('conflictCount', { count: fileSummary.conflictCount }));
+    }
+    if (showCompatible && fileSummary.compatibleCount > 0) {
+      summaryParts.push(t('compatibleCount', { count: fileSummary.compatibleCount }));
+    }
+    pathButton.appendChild(createTextNode('span', 'count', summaryParts.join(' · ')));
     pathButton.addEventListener('click', () => {
       activePath = file.absPath;
       renderExplorer();
     });
-    group.appendChild(pathButton);
+
+    const openFileButton = document.createElement('button');
+    openFileButton.type = 'button';
+    openFileButton.className = 'path-open-button';
+    openFileButton.textContent = '↗';
+    openFileButton.title = t('openPackageJson');
+    openFileButton.addEventListener('click', () => {
+      vscode.postMessage({ type: 'openPackageJson', absPath: file.absPath });
+    });
+
+    pathHeader.appendChild(pathButton);
+    pathHeader.appendChild(openFileButton);
+    group.appendChild(pathHeader);
 
     if (file.absPath === activePath) {
       const packageList = document.createElement('div');
       packageList.className = 'path-packages';
-      file.deps.forEach(dep => {
+      file.visibleDeps.forEach(dep => {
         const entry = document.createElement('div');
         entry.className = 'package-entry';
+
+        const occurrence = {
+          ...dep,
+          folder: file.folder,
+          absPath: file.absPath,
+        };
+        const packageSummary = versionIndex.get(dep.name);
+        const occurrenceStatus = model.getOccurrenceVersionStatus(
+          versionIndex,
+          occurrence,
+        );
+        const displayStatus = packageSummary?.hasConflict
+          ? 'conflict'
+          : occurrenceStatus;
 
         const packageButton = document.createElement('button');
         packageButton.type = 'button';
         packageButton.className = 'package-button';
-        packageButton.textContent = dep.name;
-        packageButton.title = dep.name + ' · ' + dep.version;
+        packageButton.title = [
+          dep.name,
+          dep.version,
+          t(VERSION_STATUS_KEYS[displayStatus]),
+        ].join(' · ');
+        packageButton.appendChild(createTextNode('span', 'package-entry-name', dep.name));
+        packageButton.appendChild(
+          createTextNode('span', 'type-badge', SECTION_SHORT[dep.type] || dep.type),
+        );
+        packageButton.appendChild(createTextNode('span', 'version', dep.version));
+        if (displayStatus === 'conflict' || displayStatus === 'identical' || showCompatible) {
+          const statusMarker = createTextNode(
+            'span',
+            'version-status-marker version-status-' + displayStatus,
+            displayStatus === 'conflict' ? '⚠' : '●',
+          );
+          statusMarker.title = t(VERSION_STATUS_KEYS[displayStatus]);
+          packageButton.appendChild(statusMarker);
+        }
         packageButton.addEventListener('click', () => {
           focusManualTarget({
             type: 'package',
@@ -200,26 +275,39 @@ function renderExplorer() {
 }
 
 function focusManualTarget(target) {
-  focusTarget = target;
-  activePath = target.absPath;
-  newVersion = target.version;
-  occurrences = model.getTargetOccurrences(packageFiles, focusTarget);
-  selectedKeys = model.createSelection(occurrences);
+  setFocusTarget(target);
   renderExplorer();
   renderDetail();
   setMode('project');
 }
 
+function setFocusTarget(target) {
+  focusTarget = target;
+  activePath = target.absPath;
+  newVersion = target.version;
+  occurrences = model.getTargetOccurrences(packageFiles, focusTarget);
+  selectedKeys = model.createSelection(occurrences);
+}
+
+function selectFirstTarget() {
+  const file = packageFiles.find(item => item.deps.length > 0);
+  if (!file) return;
+  const dep = file.deps[0];
+  setFocusTarget({
+    type: 'package',
+    value: dep.name,
+    version: dep.version,
+    absPath: file.absPath,
+  });
+}
+
 function renderDetail() {
-  const empty = element('detail-empty');
   const content = element('detail-content');
   if (!focusTarget || occurrences.length === 0) {
-    empty.hidden = false;
     content.hidden = true;
     return;
   }
 
-  empty.hidden = true;
   content.hidden = false;
   element('detail-title').textContent = focusTarget.type === 'scope'
     ? focusTarget.value + '/*'
@@ -276,6 +364,7 @@ function updateManualPreview() {
     total: occurrences.length,
   });
   element('pkg-select-none').disabled = selectedCount === 0;
+  element('pkg-select-all').disabled = selectedCount === occurrences.length;
   versionInput.classList.toggle('invalid', status.reason === 'empty-version');
   element('preview-count').textContent = t('changeCount', { count: changes.length });
 
@@ -552,7 +641,13 @@ element('close-comparison').addEventListener('click', removeExternalComparison);
 element('project-mode-button').addEventListener('click', () => setMode('project'));
 element('compare-mode-button').addEventListener('click', () => setMode('compare'));
 element('pkg-path-filter').addEventListener('input', renderExplorer);
+element('pkg-only-conflicts').addEventListener('change', renderExplorer);
+element('pkg-show-compatible').addEventListener('change', renderExplorer);
 element('pkg-new-version').addEventListener('input', updateManualPreview);
+element('pkg-select-all').addEventListener('click', () => {
+  selectedKeys = model.createSelection(occurrences);
+  renderDetail();
+});
 element('pkg-select-none').addEventListener('click', () => {
   selectedKeys.clear();
   renderDetail();

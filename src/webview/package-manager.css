@@ -2,6 +2,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 :root {
   color-scheme: light dark;
   --border: var(--vscode-panel-border, #3d4148);
@@ -160,6 +164,28 @@ h1 {
   margin-bottom: 12px;
 }
 
+.explorer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 8px;
+}
+
+.status-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.status-legend span::before {
+  margin-right: 4px;
+  content: "●";
+}
+
 .path-filter-wrap label,
 .version-row label {
   display: block;
@@ -189,14 +215,18 @@ input.invalid {
 .manager-layout {
   display: grid;
   grid-template-columns: minmax(260px, 32%) minmax(420px, 1fr);
-  min-height: min(680px, calc(100vh - 190px));
+  height: calc(100vh - 220px);
+  min-height: 520px;
   border: 1px solid var(--border);
   border-radius: 5px;
   overflow: hidden;
 }
 
 .explorer-panel {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  min-height: 0;
   background: var(--surface);
   border-right: 1px solid var(--border);
 }
@@ -226,7 +256,8 @@ input.invalid {
 }
 
 .path-explorer {
-  max-height: calc(100vh - 245px);
+  flex: 1;
+  min-height: 0;
   overflow: auto;
 }
 
@@ -235,6 +266,7 @@ input.invalid {
 }
 
 .path-button,
+.path-open-button,
 .package-button,
 .scope-button {
   border: 0;
@@ -242,6 +274,11 @@ input.invalid {
   background: transparent;
   text-align: left;
   cursor: pointer;
+}
+
+.path-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 30px;
 }
 
 .path-button {
@@ -252,7 +289,17 @@ input.invalid {
   padding: 9px 10px;
 }
 
-.path-group.active > .path-button {
+.path-open-button {
+  border-left: 1px solid var(--border);
+  text-align: center;
+}
+
+.path-open-button:hover {
+  color: var(--vscode-textLink-activeForeground);
+  background: var(--vscode-list-hoverBackground);
+}
+
+.path-group.active > .path-header {
   background: var(--vscode-list-activeSelectionBackground);
   color: var(--vscode-list-activeSelectionForeground);
   box-shadow: inset 3px 0 var(--accent);
@@ -285,6 +332,10 @@ input.invalid {
 }
 
 .package-button {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) auto auto auto;
+  align-items: center;
+  gap: 6px;
   flex: 1;
   min-width: 0;
   padding: 5px 6px;
@@ -292,6 +343,12 @@ input.invalid {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--mono);
+}
+
+.package-entry-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .package-button:hover,
@@ -306,10 +363,38 @@ input.invalid {
   border-radius: 3px;
 }
 
+.version-status-marker {
+  width: 16px;
+  text-align: center;
+}
+
+.version-status-identical {
+  color: var(--muted);
+}
+
+.version-status-compatible {
+  color: var(--success);
+}
+
+.version-status-conflict {
+  color: var(--warning);
+}
+
 .detail-panel {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  min-height: 0;
   padding: 16px;
-  overflow: auto;
+  overflow: hidden;
+}
+
+.detail-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
 }
 
 .empty-state {
@@ -354,6 +439,11 @@ input.invalid {
   border-radius: 4px 4px 0 0;
 }
 
+.selection-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .link-button {
   padding: 2px 4px;
   border: 0;
@@ -373,7 +463,8 @@ input.invalid {
 }
 
 .occurrence-list {
-  max-height: 280px;
+  flex: 1 1 0;
+  min-height: 120px;
   overflow: auto;
   border: 1px solid var(--border);
   border-top: 0;
@@ -433,6 +524,19 @@ input.invalid {
   overflow: hidden;
 }
 
+.detail-content > .preview-panel {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 120px;
+}
+
+.detail-content > .preview-panel .preview-list {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+
 .preview-list {
   max-height: 220px;
   overflow: auto;
@@ -475,6 +579,7 @@ input.invalid {
 }
 
 .action-bar {
+  flex: 0 0 auto;
   justify-content: flex-end;
   margin-top: 14px;
 }
@@ -636,6 +741,8 @@ input.invalid {
 
   .manager-layout {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 0;
   }
 
   .explorer-panel {
@@ -645,6 +752,27 @@ input.invalid {
 
   .path-explorer {
     max-height: 280px;
+  }
+
+  .detail-panel {
+    overflow: visible;
+  }
+
+  .detail-content {
+    height: auto;
+  }
+
+  .occurrence-list {
+    flex: none;
+    max-height: 280px;
+  }
+
+  .detail-content > .preview-panel {
+    flex: none;
+  }
+
+  .detail-content > .preview-panel .preview-list {
+    max-height: 220px;
   }
 
   .occurrence-row,
