@@ -59,6 +59,126 @@
     return [item.absPath, item.name, item.type].join('\u0000');
   }
 
+  function compareVersions(left, right) {
+    return left.major - right.major ||
+      left.minor - right.minor ||
+      left.patch - right.patch;
+  }
+
+  function parseSimpleSemverRange(value) {
+    const match = String(value).trim().match(
+      /^(\^|~)?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/
+    );
+    if (!match) return undefined;
+
+    const operator = match[1] || '';
+    const min = {
+      major: Number(match[2]),
+      minor: Number(match[3]),
+      patch: Number(match[4]),
+    };
+    if (!operator) return { min, maxExclusive: undefined, exact: true };
+
+    let maxExclusive;
+    if (operator === '~') {
+      maxExclusive = { major: min.major, minor: min.minor + 1, patch: 0 };
+    } else if (min.major > 0) {
+      maxExclusive = { major: min.major + 1, minor: 0, patch: 0 };
+    } else if (min.minor > 0) {
+      maxExclusive = { major: 0, minor: min.minor + 1, patch: 0 };
+    } else {
+      maxExclusive = { major: 0, minor: 0, patch: min.patch + 1 };
+    }
+    return { min, maxExclusive, exact: false };
+  }
+
+  function containsSemverRange(container, candidate) {
+    if (!container || !candidate) return false;
+    if (container.exact) {
+      return candidate.exact && compareVersions(candidate.min, container.min) === 0;
+    }
+    if (candidate.exact) {
+      return compareVersions(candidate.min, container.min) >= 0 &&
+        compareVersions(candidate.min, container.maxExclusive) < 0;
+    }
+    return compareVersions(candidate.min, container.min) >= 0 &&
+      compareVersions(candidate.maxExclusive, container.maxExclusive) <= 0;
+  }
+
+  function buildVersionStatusIndex(files) {
+    const grouped = new Map();
+    files.forEach(file => {
+      file.deps.forEach(dep => {
+        const list = grouped.get(dep.name) || [];
+        list.push({ ...dep, folder: file.folder, absPath: file.absPath });
+        grouped.set(dep.name, list);
+      });
+    });
+
+    const result = new Map();
+    grouped.forEach((items, name) => {
+      const rootVersions = [
+        ...new Set(
+          items
+            .filter(item => item.folder === 'root')
+            .map(item => item.version)
+        ),
+      ];
+      const uniqueVersions = new Set(items.map(item => item.version));
+      const referenceVersion = rootVersions.length === 1 ? rootVersions[0] : '';
+      const referenceRange = parseSimpleSemverRange(referenceVersion);
+      const statuses = new Map();
+
+      items.forEach(item => {
+        let status = 'conflict';
+        if (referenceVersion && item.version === referenceVersion) {
+          status = 'identical';
+        } else if (!referenceVersion && uniqueVersions.size === 1) {
+          status = 'identical';
+        } else if (
+          referenceRange &&
+          item.folder !== 'root' &&
+          item.type === 'peerDependencies' &&
+          containsSemverRange(
+            parseSimpleSemverRange(item.version),
+            referenceRange
+          )
+        ) {
+          status = 'compatible';
+        }
+        statuses.set(createOccurrenceKey(item), status);
+      });
+
+      const values = [...statuses.values()];
+      result.set(name, {
+        referenceVersion,
+        statuses,
+        conflictCount: values.filter(value => value === 'conflict').length,
+        compatibleCount: values.filter(value => value === 'compatible').length,
+        hasConflict: values.includes('conflict'),
+      });
+    });
+    return result;
+  }
+
+  function getOccurrenceVersionStatus(index, item) {
+    return index.get(item.name)?.statuses.get(createOccurrenceKey(item)) ||
+      'identical';
+  }
+
+  function getFileVersionSummary(file, index) {
+    const statuses = file.deps.map(dep => getOccurrenceVersionStatus(index, {
+      ...dep,
+      folder: file.folder,
+      absPath: file.absPath,
+    }));
+    return {
+      packageCount: file.deps.length,
+      conflictCount: statuses.filter(value => value === 'conflict').length,
+      compatibleCount: statuses.filter(value => value === 'compatible').length,
+    };
+  }
+
   function createSelection(occurrences) {
     return new Set(occurrences.map(createOccurrenceKey));
   }
@@ -197,6 +317,11 @@
     getPackageScope,
     getTargetOccurrences,
     createOccurrenceKey,
+    parseSimpleSemverRange,
+    containsSemverRange,
+    buildVersionStatusIndex,
+    getOccurrenceVersionStatus,
+    getFileVersionSummary,
     createSelection,
     buildPreview,
     getSaveStatus,
