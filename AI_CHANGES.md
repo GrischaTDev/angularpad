@@ -3,6 +3,13 @@
 Project-local log of AI-made changes. Every AI agent that changes files in this
 repository must add an entry here in the same change set.
 
+## 2026-07-22 - Codex (GPT-5)
+
+- Changed: Documented the approved design for root-aware package-version compatibility, conflict filtering, richer package trees, direct package.json navigation, targetless package-manager opening, select-all, and a full-height detail layout.
+- Files: `docs/superpowers/specs/2026-07-22-package-version-compatibility-navigation-design.md`, `AI_CHANGES.md`.
+- Verification: The specification self-review found no placeholders, contradictions, uncovered requirements, or ambiguous behavior; `git diff --check` passed.
+- Notes: The design was approved in sections. Implementation remains pending until the written specification is reviewed.
+
 ## 2026-07-21 - Codex (GPT-5)
 
 - Changed: Released AngularPad `0.9.0` to the VS Code Marketplace and aligned the release metadata and package exclusions.
