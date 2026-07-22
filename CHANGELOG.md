@@ -5,6 +5,25 @@ All notable changes to the **AngularPad** extension are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Root-aware compatibility classification for nested library peer ranges, so
+  compatible declarations such as a root `~21.2.0` and library `^21.2.0` are
+  separated from real version conflicts.
+- Conflict-only and compatible-difference controls, package versions, status
+  counts, and direct `package.json` navigation in both package views.
+- A sidebar action and VS Code command for opening the full package manager
+  without first choosing a package.
+- **Select all** alongside **Deselect all** for package occurrences.
+
+### Changed
+
+- The full package manager now selects the first package automatically, removes
+  the large instructional detail placeholder, and uses the available editor
+  height for occurrences, live preview, and actions.
+
 ## [0.9.0] - 2026-07-21
 
 ### Added

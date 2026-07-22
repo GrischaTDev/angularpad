@@ -5,6 +5,13 @@ repository must add an entry here in the same change set.
 
 ## 2026-07-22 - Codex (GPT-5)
 
+- Changed: Implemented root-aware peer-range compatibility, real-conflict and compatible-difference filters, status-rich package trees, validated package.json navigation, targetless package-manager opening, automatic first selection, select-all, and a full-height detail layout.
+- Files: `package.json`, `src/extension.ts`, `src/provider.ts`, `src/package-manager-panel.ts`, `src/webview/package-manager-model.js`, `src/webview/index.html`, `src/webview/main.js`, `src/webview/styles.css`, `src/webview/package-manager.html`, `src/webview/package-manager.js`, `src/webview/package-manager.css`, `src/webview/i18n.js`, `README.md`, `CHANGELOG.md`, `AI_CHANGES.md`.
+- Verification: Focused executable compatibility checks passed for exact, caret, tilde, subset, reverse-subset, unsupported-format, missing-root, and real-conflict behavior; JavaScript syntax, UI message/element contracts, English/German key parity, `npm run compile`, `vsce package`, and `git diff --check` passed.
+- Notes: Implementation commits are `64fcb0e`, `59cc51d`, `46c3890`, and `baa61a5`. No dependency, lockfile integration, automated rescan, path-copy action, or automated test file was added; the local user change in `AGENTS.md` remains untouched.
+
+## 2026-07-22 - Codex (GPT-5)
+
 - Changed: Added the implementation plan for root-aware package-version compatibility, package status navigation, full-height editing, and bulk selection.
 - Files: `docs/superpowers/plans/2026-07-22-package-version-compatibility-navigation.md`, `AI_CHANGES.md`.
 - Verification: Plan self-review confirmed complete specification coverage, no placeholders, and consistent interfaces and command names; `git diff --check` passed.
