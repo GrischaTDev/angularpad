@@ -5,6 +5,13 @@ repository must add an entry here in the same change set.
 
 ## 2026-07-22 - Codex (GPT-5)
 
+- Changed: Released AngularPad `0.10.0` to the VS Code Marketplace and aligned the release metadata for the root-aware package compatibility and navigation update.
+- Files: `package.json`, `package-lock.json`, `CHANGELOG.md`, `AI_CHANGES.md`.
+- Verification: `npm run compile` passed; `vsce package` created `angularpad-0.10.0.vsix` with 24 files; `vsce publish --packagePath angularpad-0.10.0.vsix` published successfully; duplicate-safe publish reported `Version 0.10.0 is already published. Skipping publish.`
+- Notes: The Marketplace accepted version `0.10.0`; `vsce show` still returned `0.9.0` immediately afterward because the Marketplace API cache had not refreshed yet.
+
+## 2026-07-22 - Codex (GPT-5)
+
 - Changed: Implemented root-aware peer-range compatibility, real-conflict and compatible-difference filters, status-rich package trees, validated package.json navigation, targetless package-manager opening, automatic first selection, select-all, and a full-height detail layout.
 - Files: `package.json`, `src/extension.ts`, `src/provider.ts`, `src/package-manager-panel.ts`, `src/webview/package-manager-model.js`, `src/webview/index.html`, `src/webview/main.js`, `src/webview/styles.css`, `src/webview/package-manager.html`, `src/webview/package-manager.js`, `src/webview/package-manager.css`, `src/webview/i18n.js`, `README.md`, `CHANGELOG.md`, `AI_CHANGES.md`.
 - Verification: Focused executable compatibility checks passed for exact, caret, tilde, subset, reverse-subset, unsupported-format, missing-root, and real-conflict behavior; JavaScript syntax, UI message/element contracts, English/German key parity, `npm run compile`, `vsce package`, and `git diff --check` passed.
