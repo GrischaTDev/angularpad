@@ -5,6 +5,13 @@ repository must add an entry here in the same change set.
 
 ## 2026-07-22 - Codex (GPT-5)
 
+- Changed: Fixed root-aware compatibility when the frontend root package.json is nested below the opened VS Code workspace, such as `angular/package.json` inside a solution folder.
+- Files: `src/webview/package-manager-model.js`, `CHANGELOG.md`, `AI_CHANGES.md`.
+- Verification: A one-off regression check failed before the fix for root `~21.2.0` versus nested peer `^21.2.0` under the `angular/` folder and passed afterward; workspace-root, reverse-subset, ambiguous-root, JavaScript syntax, TypeScript compile, and `git diff --check` checks passed.
+- Notes: Reference selection now uses the shallowest authoritative non-peer occurrence per package instead of requiring the literal folder label `root`. No test file or dependency was added; the local user change in `AGENTS.md` remains untouched.
+
+## 2026-07-22 - Codex (GPT-5)
+
 - Changed: Released AngularPad `0.10.0` to the VS Code Marketplace and aligned the release metadata for the root-aware package compatibility and navigation update.
 - Files: `package.json`, `package-lock.json`, `CHANGELOG.md`, `AI_CHANGES.md`.
 - Verification: `npm run compile` passed; `vsce package` created `angularpad-0.10.0.vsix` with 24 files; `vsce publish --packagePath angularpad-0.10.0.vsix` published successfully; duplicate-safe publish reported `Version 0.10.0 is already published. Skipping publish.`

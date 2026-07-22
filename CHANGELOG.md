@@ -5,6 +5,15 @@ All notable changes to the **AngularPad** extension are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Root-aware compatibility now recognizes a nested frontend root such as
+  `angular/package.json` when VS Code is opened on the parent solution folder,
+  preventing compatible root `~` and library peer `^` ranges from being
+  reported as conflicts.
+
 ## [0.10.0] - 2026-07-22
 
 ### Added

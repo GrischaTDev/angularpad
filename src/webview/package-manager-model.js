@@ -105,6 +105,18 @@
       compareVersions(candidate.maxExclusive, container.maxExclusive) <= 0;
   }
 
+  function getFolderDepth(folder) {
+    if (!folder || folder === 'root') return 0;
+    return normalize(folder).split('/').filter(Boolean).length;
+  }
+
+  function getReferenceOccurrences(items) {
+    const nonPeerItems = items.filter(item => item.type !== 'peerDependencies');
+    const candidates = nonPeerItems.length > 0 ? nonPeerItems : items;
+    const minimumDepth = Math.min(...candidates.map(item => getFolderDepth(item.folder)));
+    return candidates.filter(item => getFolderDepth(item.folder) === minimumDepth);
+  }
+
   function buildVersionStatusIndex(files) {
     const grouped = new Map();
     files.forEach(file => {
@@ -117,15 +129,15 @@
 
     const result = new Map();
     grouped.forEach((items, name) => {
-      const rootVersions = [
-        ...new Set(
-          items
-            .filter(item => item.folder === 'root')
-            .map(item => item.version)
-        ),
+      const referenceItems = getReferenceOccurrences(items);
+      const referenceKeys = new Set(referenceItems.map(createOccurrenceKey));
+      const referenceVersions = [
+        ...new Set(referenceItems.map(item => item.version)),
       ];
       const uniqueVersions = new Set(items.map(item => item.version));
-      const referenceVersion = rootVersions.length === 1 ? rootVersions[0] : '';
+      const referenceVersion = referenceVersions.length === 1
+        ? referenceVersions[0]
+        : '';
       const referenceRange = parseSimpleSemverRange(referenceVersion);
       const statuses = new Map();
 
@@ -137,7 +149,7 @@
           status = 'identical';
         } else if (
           referenceRange &&
-          item.folder !== 'root' &&
+          !referenceKeys.has(createOccurrenceKey(item)) &&
           item.type === 'peerDependencies' &&
           containsSemverRange(
             parseSimpleSemverRange(item.version),
