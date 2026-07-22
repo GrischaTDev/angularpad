@@ -348,8 +348,12 @@ const SECTION_SHORT = {
   optionalDependencies: 'opt',
 };
 
-function t(key) {
-  return (i18n[currentLang] && i18n[currentLang][key]) || i18n.en[key] || key;
+function t(key, values = {}) {
+  let text = (i18n[currentLang] && i18n[currentLang][key]) || i18n.en[key] || key;
+  Object.entries(values).forEach(([name, value]) => {
+    text = text.replaceAll('{' + name + '}', String(value));
+  });
+  return text;
 }
 
 function escapeHtml(str) {
@@ -412,6 +416,8 @@ function renderPackages() {
   const list = document.getElementById('packages-list');
   const filterEl = document.getElementById('pkg-filter');
   const filter = (filterEl ? filterEl.value : '').trim().toLowerCase();
+  const onlyConflicts = document.getElementById('pkg-only-conflicts').checked;
+  const showCompatible = document.getElementById('pkg-show-compatible').checked;
 
   if (!packageData || packageData.length === 0) {
     list.innerHTML = '<div class="pkg-empty">' + t('noPackages') + '</div>';
@@ -420,31 +426,84 @@ function renderPackages() {
 
   const index = buildPackageIndex();
   const scopeIndex = buildScopeIndex(index);
+  const versionIndex = PackageManagerModel.buildVersionStatusIndex(packageData);
   list.innerHTML = '';
 
   const filteredFiles = PackageManagerModel.filterPackageFiles(packageData, filter);
   filteredFiles.forEach(file => {
-    const deps = file.deps;
+    const deps = onlyConflicts
+      ? file.deps.filter(dep => versionIndex.get(dep.name)?.hasConflict)
+      : file.deps;
+    if (deps.length === 0) return;
 
     const header = document.createElement('div');
     header.className = 'pkg-folder-header';
-    const folderName = file.name ? file.name : '';
-    header.innerHTML = '<span class="pkg-folder-label">📁 ' + escapeHtml(file.folder) + '</span>' +
-      (folderName ? '<span class="pkg-folder-name">' + escapeHtml(folderName) + '</span>' : '');
+
+    const headerIdentity = document.createElement('div');
+    headerIdentity.className = 'pkg-folder-identity';
+    const folderLabel = document.createElement('span');
+    folderLabel.className = 'pkg-folder-label';
+    folderLabel.textContent = '📁 ' + file.folder;
+    headerIdentity.appendChild(folderLabel);
+    if (file.name) {
+      const folderName = document.createElement('span');
+      folderName.className = 'pkg-folder-name';
+      folderName.textContent = file.name;
+      headerIdentity.appendChild(folderName);
+    }
+
+    const fileSummary = PackageManagerModel.getFileVersionSummary(file, versionIndex);
+    const summary = document.createElement('span');
+    summary.className = 'pkg-folder-summary';
+    const summaryParts = [t('packageCount', { count: fileSummary.packageCount })];
+    if (fileSummary.conflictCount > 0) {
+      summaryParts.push(t('conflictCount', { count: fileSummary.conflictCount }));
+    }
+    if (showCompatible && fileSummary.compatibleCount > 0) {
+      summaryParts.push(t('compatibleCount', { count: fileSummary.compatibleCount }));
+    }
+    summary.textContent = summaryParts.join(' · ');
+
+    const openFileButton = document.createElement('button');
+    openFileButton.className = 'icon-btn pkg-open-file';
+    openFileButton.type = 'button';
+    openFileButton.textContent = '↗';
+    openFileButton.title = t('openPackageJson');
+    openFileButton.onclick = () => openPackageJson(file.absPath);
+
+    header.appendChild(headerIdentity);
+    header.appendChild(summary);
+    header.appendChild(openFileButton);
     list.appendChild(header);
 
     deps.forEach(dep => {
       const occurrences = index[dep.name] || [];
-      const versions = new Set(occurrences.map(o => o.version));
-      const mismatch = occurrences.length > 1 && versions.size > 1;
+      const packageSummary = versionIndex.get(dep.name);
+      const occurrence = {
+        ...dep,
+        folder: file.folder,
+        absPath: file.absPath,
+      };
+      const status = PackageManagerModel.getOccurrenceVersionStatus(
+        versionIndex,
+        occurrence,
+      );
+      const hasConflict = packageSummary?.hasConflict === true;
 
       const row = document.createElement('div');
-      row.className = 'pkg-row' + (mismatch ? ' pkg-mismatch' : '');
+      row.className = 'pkg-row' + (hasConflict ? ' pkg-mismatch' : '');
 
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'pkg-name';
-      nameSpan.textContent = dep.name;
-      nameSpan.title = dep.name;
+      const nameButton = document.createElement('button');
+      nameButton.className = 'pkg-name';
+      nameButton.type = 'button';
+      nameButton.textContent = dep.name;
+      nameButton.title = t('btnEditVersion');
+      nameButton.onclick = () => openPackageManager(
+        'package',
+        dep.name,
+        dep.version,
+        file.absPath,
+      );
 
       const badge = document.createElement('span');
       badge.className = 'pkg-badge pkg-badge-' + dep.type;
@@ -453,7 +512,7 @@ function renderPackages() {
       const verSpan = document.createElement('span');
       verSpan.className = 'pkg-version';
       verSpan.textContent = dep.version;
-      if (mismatch) verSpan.title = t('mismatchHint');
+      if (hasConflict) verSpan.title = t('mismatchHint');
 
       const editBtn = document.createElement('button');
       editBtn.className = 'icon-btn pkg-edit';
@@ -483,15 +542,21 @@ function renderPackages() {
         );
       }
 
-      row.appendChild(nameSpan);
+      row.appendChild(nameButton);
       row.appendChild(badge);
       row.appendChild(verSpan);
-      if (mismatch) {
+      if (hasConflict) {
         const warn = document.createElement('span');
         warn.className = 'pkg-warn';
         warn.textContent = '⚠';
         warn.title = t('mismatchHint');
         row.appendChild(warn);
+      } else if (showCompatible && status === 'compatible') {
+        const compatible = document.createElement('span');
+        compatible.className = 'pkg-status-compatible';
+        compatible.textContent = '✓';
+        compatible.title = t('compatibleHint');
+        row.appendChild(compatible);
       }
       if (scopeBtn) row.appendChild(scopeBtn);
       row.appendChild(editBtn);
@@ -505,10 +570,13 @@ function renderPackages() {
 }
 
 function openPackageManager(type, value, version, absPath) {
-  vscode.postMessage({
-    type: 'openPackageManager',
-    target: { type, value, version, absPath },
-  });
+  const message = { type: 'openPackageManager' };
+  if (type) message.target = { type, value, version, absPath };
+  vscode.postMessage(message);
+}
+
+function openPackageJson(absPath) {
+  vscode.postMessage({ type: 'openPackageJson', absPath });
 }
 
 function onDependenciesApplied(applied) {

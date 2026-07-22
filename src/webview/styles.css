@@ -299,6 +299,28 @@ h3 {
 
 /* ===== Packages / Dependencies ===== */
 
+.pkg-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.pkg-open-manager {
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  background: var(--surface);
+  cursor: pointer;
+  font: inherit;
+}
+
+.pkg-open-manager:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 .pkg-controls {
   display: flex;
   flex-direction: column;
@@ -326,6 +348,15 @@ h3 {
 }
 .pkg-filter:focus { border-color: var(--accent); }
 
+.pkg-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 10px;
+  cursor: pointer;
+}
+
 .pkg-empty {
   color: var(--muted);
   font-size: 11px;
@@ -334,12 +365,19 @@ h3 {
 }
 
 .pkg-folder-header {
-  display: flex;
-  align-items: baseline;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
   gap: 6px;
   margin: 12px 0 5px;
   padding-bottom: 4px;
   border-bottom: 1px solid var(--border);
+}
+.pkg-folder-identity {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 6px;
 }
 .pkg-folder-label {
   font-size: 10px;
@@ -354,6 +392,15 @@ h3 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.pkg-folder-summary {
+  color: var(--muted);
+  font-size: 9px;
+  white-space: nowrap;
+}
+.pkg-open-file {
+  padding: 1px 3px;
+  font-size: 11px;
 }
 
 .pkg-row {
@@ -370,12 +417,20 @@ h3 {
 
 .pkg-name {
   flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
   font-size: 11px;
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.pkg-name:hover { color: var(--accent); }
 
 .pkg-version {
   font-size: 11px;
@@ -399,6 +454,7 @@ h3 {
 .pkg-badge-optionalDependencies { background: rgba(245,158,11,0.18); color: var(--amber); }
 
 .pkg-warn { color: var(--amber); font-size: 12px; flex-shrink: 0; }
+.pkg-status-compatible { color: var(--green); font-size: 12px; flex-shrink: 0; }
 .pkg-edit { font-size: 12px; flex-shrink: 0; }
 
 .pkg-banner {

@@ -119,11 +119,22 @@
 
 <div id="tab-packages" class="tab-content">
   <p style="color: var(--muted); margin-bottom: 10px;" data-i18n="packagesDesc">Find all package.json files and change package versions across them at once.</p>
-  <div class="pkg-controls">
+  <div class="pkg-actions">
     <button class="btn-primary pkg-scan-button" onclick="scanDependencies()">
-      <span style="font-size: 14px;">🔍</span> <span data-i18n="btnScanDeps">Scan Dependencies</span>
+      <span style="font-size: 14px;" aria-hidden="true">🔍</span> <span data-i18n="btnScanDeps">Scan Dependencies</span>
     </button>
+    <button class="pkg-open-manager" onclick="openPackageManager()" data-i18n="btnOpenPackageManager">Open package manager</button>
+  </div>
+  <div class="pkg-controls">
     <input id="pkg-filter" class="pkg-filter" type="search" data-i18n-placeholder="pathSearch" placeholder="Filter folder path..." oninput="renderPackages()" />
+    <label class="pkg-toggle">
+      <input id="pkg-only-conflicts" type="checkbox" onchange="renderPackages()" />
+      <span data-i18n="onlyRealConflicts">Only real conflicts</span>
+    </label>
+    <label class="pkg-toggle">
+      <input id="pkg-show-compatible" type="checkbox" onchange="renderPackages()" />
+      <span data-i18n="showCompatibleDifferences">Show compatible differences</span>
+    </label>
   </div>
   <div id="pkg-install-banner" class="pkg-banner"></div>
   <div id="packages-list"></div>
