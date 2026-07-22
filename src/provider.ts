@@ -33,6 +33,10 @@ export class NgCommanderViewProvider implements vscode.WebviewViewProvider {
     );
   }
 
+  async openPackageManager(target?: PackageManagerTarget): Promise<void> {
+    await this._packageManagerPanel.show(target);
+  }
+
   resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
 
@@ -139,17 +143,22 @@ export class NgCommanderViewProvider implements vscode.WebviewViewProvider {
         }
         case "openPackageManager": {
           const target = msg.target as PackageManagerTarget | undefined;
-          if (
+          if (target === undefined) {
+            await this.openPackageManager();
+          } else if (
             target &&
             (target.type === "package" || target.type === "scope") &&
             typeof target.value === "string" &&
             typeof target.version === "string" &&
             typeof target.absPath === "string"
           ) {
-            await this._packageManagerPanel.show(target);
+            await this.openPackageManager(target);
           }
           break;
         }
+        case "openPackageJson":
+          await this._packageManagerPanel.openPackageJson(msg.absPath);
+          break;
       }
     });
   }

@@ -37,6 +37,11 @@
         "icon": "$(zap)"
       },
       {
+        "command": "angularpad.openPackageManager",
+        "title": "AngularPad: Open Package Manager",
+        "icon": "$(package)"
+      },
+      {
         "command": "angularpad.runCommand",
         "title": "AngularPad: Run Command"
       }

@@ -10,6 +10,9 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("angularpad.openPanel", () => {
       vscode.commands.executeCommand("angularpad.panel.focus");
     }),
+    vscode.commands.registerCommand("angularpad.openPackageManager", () =>
+      provider.openPackageManager(),
+    ),
     vscode.commands.registerCommand("angularpad.runCommand", (cmd: string) => {
       handleCommand(cmd, context);
     }),

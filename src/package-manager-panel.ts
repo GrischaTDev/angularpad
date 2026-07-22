@@ -26,6 +26,7 @@ interface PackageManagerPanelDependencies {
   ): Thenable<readonly vscode.Uri[] | undefined>;
   readFile(filePath: string): Promise<string>;
   getFileSize(filePath: string): Promise<number>;
+  openPackageJson(filePath: string): Promise<void>;
   showInformationMessage(message: string): Thenable<unknown>;
   showWarningMessage(message: string): Thenable<unknown>;
 }
@@ -36,6 +37,12 @@ const defaultDependencies: PackageManagerPanelDependencies = {
   showOpenDialog: (options) => vscode.window.showOpenDialog(options),
   readFile: (filePath) => fsp.readFile(filePath, "utf8"),
   getFileSize: async (filePath) => (await fsp.stat(filePath)).size,
+  openPackageJson: async (filePath) => {
+    const document = await vscode.workspace.openTextDocument(
+      vscode.Uri.file(filePath),
+    );
+    await vscode.window.showTextDocument(document, { preview: false });
+  },
   showInformationMessage: (message) =>
     vscode.window.showInformationMessage(message),
   showWarningMessage: (message) => vscode.window.showWarningMessage(message),
@@ -57,7 +64,7 @@ export class PackageManagerPanel {
       defaultDependencies,
   ) {}
 
-  async show(target: PackageManagerTarget): Promise<void> {
+  async show(target?: PackageManagerTarget): Promise<void> {
     this.target = target;
     this.focusRevision += 1;
 
@@ -119,6 +126,9 @@ export class PackageManagerPanel {
         break;
       case "selectExternalPackageJson":
         await this.selectExternalPackageJson();
+        break;
+      case "openPackageJson":
+        await this.openPackageJson(data.absPath);
         break;
       case "close":
         this.panel?.dispose();
@@ -199,6 +209,26 @@ export class PackageManagerPanel {
 
       return [change as unknown as VersionChange];
     });
+  }
+
+  async openPackageJson(value: unknown): Promise<void> {
+    if (typeof value !== "string") return;
+
+    try {
+      const packages = await this.dependencies.scan();
+      if (!packages.some((file) => file.absPath === value)) {
+        await this.dependencies.showWarningMessage(
+          "AngularPad: Die package.json gehört nicht zum aktuellen Workspace-Scan.",
+        );
+        return;
+      }
+
+      await this.dependencies.openPackageJson(value);
+    } catch {
+      await this.dependencies.showWarningMessage(
+        "AngularPad: Die package.json konnte nicht geöffnet werden.",
+      );
+    }
   }
 
   private async selectExternalPackageJson(): Promise<void> {
